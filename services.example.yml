@@ -1,0 +1,36 @@
+title: Home Page
+services:
+  - name: Both
+    url: https://domain.com
+    local: http://localhost:8080
+    icon: ⌂
+
+  - name: Both 2
+    url: https://domain.com
+    local: http://localhost:8080
+    icon: ⌂
+
+  - name: Both 3
+    url: https://domain.com
+    local: http://localhost:8080
+    icon: ⌂
+
+  - name: External
+    url: https://domain.com
+    icon: ⌂
+
+  - name: External2
+    url: https://domain.com
+    icon: ⌂
+
+  - name: External3
+    url: https://domain.com
+    icon: ⌂
+
+  - name: Internal
+    local: https://localhost:9090
+    icon: ⌂
+
+  - name: Internal 2
+    local: https://localhost:9090
+    icon: ⌂
