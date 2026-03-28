@@ -8,6 +8,7 @@ A minimal, clean homepage.
 - External/Local toggle for different network environments
 - Search/filter services
 - Type-to-jump (just start typing)
+- Drag to reorder services (saved in browser)
 - Long-press (500ms) to copy service URL
 - Auto-detect service type from YAML
 - Mobile-friendly with scroll detection

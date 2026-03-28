@@ -189,6 +189,7 @@ html = f'''<!DOCTYPE html>
     .grid a {{
       width: 140px;
       flex-shrink: 0;
+      cursor: grab;
     }}
 
     a {{
@@ -276,7 +277,7 @@ html = f'''<!DOCTYPE html>
 for s in services:
     url = s.get('url', '')
     local = s.get('local', url)
-    html += f'''      <a href="{url or local}" data-external="{url}" data-local="{local}" data-type="{s['type']}">
+    html += f'''      <a href="{url or local}" data-name="{s['name'].lower()}" data-external="{url}" data-local="{local}" data-type="{s['type']}">
         <span class="icon">{s['icon']}</span>
         {s['name']}
       </a>
@@ -298,7 +299,52 @@ html += '''    </div>
     setInterval(updateTime, 1000);
 
     const toggle = document.getElementById('modeToggle');
-    const links = document.querySelectorAll('.grid a');
+    const grid = document.querySelector('.grid');
+    const links = [...document.querySelectorAll('.grid a')];
+
+    let draggedItem = null;
+
+    function saveOrder() {
+      const order = [...grid.children].map(el => el.dataset.name);
+      localStorage.setItem('homelab-order', JSON.stringify(order));
+    }
+
+    function loadOrder() {
+      const saved = localStorage.getItem('homelab-order');
+      if (saved) {
+        const order = JSON.parse(saved);
+        order.forEach(name => {
+          const link = links.find(l => l.dataset.name === name);
+          if (link) grid.appendChild(link);
+        });
+      }
+    }
+    loadOrder();
+
+    links.forEach(link => {
+      link.draggable = true;
+      link.addEventListener('dragstart', (e) => {
+        draggedItem = link;
+        link.style.opacity = '0.5';
+      });
+      link.addEventListener('dragend', () => {
+        link.style.opacity = '1';
+        draggedItem = null;
+        saveOrder();
+      });
+      link.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (draggedItem && draggedItem !== link) {
+          const rect = link.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (e.clientY < midY) {
+            grid.insertBefore(draggedItem, link);
+          } else {
+            grid.insertBefore(draggedItem, link.nextSibling);
+          }
+        }
+      });
+    });
 
     function setMode(local) {
       links.forEach(link => {

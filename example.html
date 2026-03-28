@@ -152,6 +152,7 @@
     .grid a {
       width: 140px;
       flex-shrink: 0;
+      cursor: grab;
     }
 
     a {
@@ -234,35 +235,35 @@
       <input type="text" id="search" class="search" placeholder="Type to jump...">
     </header>
     <div class="grid">
-      <a href="https://domain.com" data-external="https://domain.com" data-local="http://localhost:8080" data-type="both">
+      <a href="https://domain.com" data-name="both" data-external="https://domain.com" data-local="http://localhost:8080" data-type="both">
         <span class="icon">🛠</span>
         Both
       </a>
-      <a href="https://domain.com" data-external="https://domain.com" data-local="http://localhost:8080" data-type="both">
+      <a href="https://domain.com" data-name="both 2" data-external="https://domain.com" data-local="http://localhost:8080" data-type="both">
         <span class="icon">🛠</span>
         Both 2
       </a>
-      <a href="https://domain.com" data-external="https://domain.com" data-local="http://localhost:8080" data-type="both">
+      <a href="https://domain.com" data-name="both 3" data-external="https://domain.com" data-local="http://localhost:8080" data-type="both">
         <span class="icon">🛠</span>
         Both 3
       </a>
-      <a href="https://domain.com" data-external="https://domain.com" data-local="https://domain.com" data-type="external">
+      <a href="https://domain.com" data-name="external" data-external="https://domain.com" data-local="https://domain.com" data-type="external">
         <span class="icon">🌐</span>
         External
       </a>
-      <a href="https://domain.com" data-external="https://domain.com" data-local="https://domain.com" data-type="external">
+      <a href="https://domain.com" data-name="external2" data-external="https://domain.com" data-local="https://domain.com" data-type="external">
         <span class="icon">🌐</span>
         External2
       </a>
-      <a href="https://domain.com" data-external="https://domain.com" data-local="https://domain.com" data-type="external">
+      <a href="https://domain.com" data-name="external3" data-external="https://domain.com" data-local="https://domain.com" data-type="external">
         <span class="icon">🌐</span>
         External3
       </a>
-      <a href="https://localhost:9090" data-external="" data-local="https://localhost:9090" data-type="local">
+      <a href="https://localhost:9090" data-name="internal" data-external="" data-local="https://localhost:9090" data-type="local">
         <span class="icon">🏠</span>
         Internal
       </a>
-      <a href="https://localhost:9090" data-external="" data-local="https://localhost:9090" data-type="local">
+      <a href="https://localhost:9090" data-name="internal 2" data-external="" data-local="https://localhost:9090" data-type="local">
         <span class="icon">🏠</span>
         Internal 2
       </a>
@@ -282,7 +283,52 @@
     setInterval(updateTime, 1000);
 
     const toggle = document.getElementById('modeToggle');
-    const links = document.querySelectorAll('.grid a');
+    const grid = document.querySelector('.grid');
+    const links = [...document.querySelectorAll('.grid a')];
+
+    let draggedItem = null;
+
+    function saveOrder() {
+      const order = [...grid.children].map(el => el.dataset.name);
+      localStorage.setItem('homelab-order', JSON.stringify(order));
+    }
+
+    function loadOrder() {
+      const saved = localStorage.getItem('homelab-order');
+      if (saved) {
+        const order = JSON.parse(saved);
+        order.forEach(name => {
+          const link = links.find(l => l.dataset.name === name);
+          if (link) grid.appendChild(link);
+        });
+      }
+    }
+    loadOrder();
+
+    links.forEach(link => {
+      link.draggable = true;
+      link.addEventListener('dragstart', (e) => {
+        draggedItem = link;
+        link.style.opacity = '0.5';
+      });
+      link.addEventListener('dragend', () => {
+        link.style.opacity = '1';
+        draggedItem = null;
+        saveOrder();
+      });
+      link.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (draggedItem && draggedItem !== link) {
+          const rect = link.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (e.clientY < midY) {
+            grid.insertBefore(draggedItem, link);
+          } else {
+            grid.insertBefore(draggedItem, link.nextSibling);
+          }
+        }
+      });
+    });
 
     function setMode(local) {
       links.forEach(link => {
