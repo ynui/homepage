@@ -22,6 +22,9 @@ vim services.yml
 # Build
 python3 build.py
 
+# Or build a specific config
+python3 build.py --example    # uses services.example.yml -> example.html
+
 # Serve locally
 python3 -m http.server 8080
 ```

@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
+import sys
+import os
 
-with open('services.yml') as f:
+example = None
+if len(sys.argv) > 1 and sys.argv[1].startswith('--'):
+    example = sys.argv[1][2:]
+
+yaml_file = f'services.{example}.yml' if example else 'services.yml'
+output_file = f'{example}.html' if example else 'index.html'
+
+with open(yaml_file) as f:
     content = f.read()
 
 title = 'Home Page'
@@ -518,7 +527,7 @@ html += '''    </div>
 </body>
 </html>'''
 
-with open('index.html', 'w') as f:
+with open(output_file, 'w') as f:
     f.write(html)
 
-print(f'Generated index.html with {len(services)} services')
+print(f'Generated {output_file} with {len(services)} services')
