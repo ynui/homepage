@@ -7,6 +7,7 @@ A minimal, clean homepage for homelab services.
 - Clean, dark-themed UI
 - External/Local toggle for different network environments
 - Search/filter services
+- Type-to-jump (just start typing)
 - Long-press (500ms) to copy service URL
 - Auto-detect service type from YAML
 - Mobile-friendly with scroll detection
@@ -49,6 +50,10 @@ services:
 - **Click/Tap**: Navigate to service
 - **Long Press** (500ms): Copy URL to clipboard
 - **Scroll**: Normal page scrolling (won't trigger copy)
+- **Type**: Start typing to filter and jump to first result
+- **Arrow Keys**: Navigate filtered results
+- **Enter**: Open selected service
+- **Esc**: Clear search
 
 ## Deployment
 

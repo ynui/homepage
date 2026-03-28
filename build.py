@@ -219,6 +219,13 @@ html = f'''<!DOCTYPE html>
       color: var(--text-hover);
     }}
 
+    a.selected {{
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 30px var(--accent-glow), 0 0 0 1px var(--accent);
+      color: var(--text-hover);
+    }}
+
     .icon {{
       font-size: 1.5rem;
       opacity: 0.7;
@@ -261,7 +268,7 @@ html = f'''<!DOCTYPE html>
         <span class="toggle-switch"></span>
         <span id="modeLabel" class="toggle-label">External</span>
       </label>
-      <input type="text" id="search" class="search" placeholder="Search...">
+      <input type="text" id="search" class="search" placeholder="Type to jump...">
     </header>
     <div class="grid">
 '''
@@ -391,12 +398,75 @@ html += '''    </div>
     setMode(false);
 
     const search = document.getElementById('search');
-    search.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
+    let selectedIndex = -1;
+
+    function filterServices(query) {
+      const q = query.toLowerCase();
+      let visibleLinks = [];
       links.forEach(link => {
         const name = link.textContent.toLowerCase();
-        link.classList.toggle('hidden', query && !name.includes(query));
+        const isMatch = !q || name.includes(q);
+        link.classList.toggle('hidden', !isMatch);
+        if (isMatch) visibleLinks.push(link);
       });
+      selectedIndex = visibleLinks.length > 0 ? 0 : -1;
+      updateSelection(visibleLinks);
+    }
+
+    function updateSelection(visibleLinks) {
+      visibleLinks.forEach((link, i) => link.classList.remove('selected'));
+      if (selectedIndex >= 0 && visibleLinks[selectedIndex]) {
+        visibleLinks[selectedIndex].classList.add('selected');
+      }
+    }
+
+    function openSelected() {
+      const visibleLinks = [...links].filter(l => !l.classList.contains('hidden'));
+      if (selectedIndex >= 0 && visibleLinks[selectedIndex]) {
+        window.location.href = visibleLinks[selectedIndex].href;
+      }
+    }
+
+    search.addEventListener('input', (e) => filterServices(e.target.value));
+
+    search.addEventListener('keydown', (e) => {
+      const visibleLinks = [...links].filter(l => !l.classList.contains('hidden'));
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, visibleLinks.length - 1);
+        updateSelection(visibleLinks);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        updateSelection(visibleLinks);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        openSelected();
+      } else if (e.key === 'Escape') {
+        search.value = '';
+        filterServices('');
+        search.blur();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'Escape') {
+        search.value = '';
+        filterServices('');
+        search.blur();
+        links.forEach(l => l.classList.remove('selected'));
+        return;
+      }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        if (document.activeElement !== search) {
+          search.value = '';
+          search.focus();
+        }
+        search.value += e.key;
+        filterServices(search.value);
+      }
     });
   </script>
 </body>

@@ -3,34 +3,34 @@ services:
   - name: Both
     url: https://domain.com
     local: http://localhost:8080
-    icon: ⌂
+    icon: 🛠
 
   - name: Both 2
     url: https://domain.com
     local: http://localhost:8080
-    icon: ⌂
+    icon: 🛠
 
   - name: Both 3
     url: https://domain.com
     local: http://localhost:8080
-    icon: ⌂
+    icon: 🛠
 
   - name: External
     url: https://domain.com
-    icon: ⌂
+    icon: 🌐
 
   - name: External2
     url: https://domain.com
-    icon: ⌂
+    icon: 🌐
 
   - name: External3
     url: https://domain.com
-    icon: ⌂
+    icon: 🌐
 
   - name: Internal
     local: https://localhost:9090
-    icon: ⌂
+    icon: 🏠
 
   - name: Internal 2
     local: https://localhost:9090
-    icon: ⌂
+    icon: 🏠
