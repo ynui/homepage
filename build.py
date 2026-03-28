@@ -151,6 +151,34 @@ html = f'''<!DOCTYPE html>
       margin-top: 0.25rem;
     }}
 
+    .search {{
+      margin-top: 1.5rem;
+      width: 100%;
+      max-width: 280px;
+      padding: 0.75rem 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8rem;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }}
+
+    .search::placeholder {{
+      color: #444;
+    }}
+
+    .search:focus {{
+      border-color: var(--accent);
+    }}
+
+    a.hidden {{
+      display: none;
+    }}
+
     .grid {{
       display: flex;
       flex-wrap: wrap;
@@ -233,6 +261,7 @@ html = f'''<!DOCTYPE html>
         <span class="toggle-switch"></span>
         <span id="modeLabel" class="toggle-label">External</span>
       </label>
+      <input type="text" id="search" class="search" placeholder="Search...">
     </header>
     <div class="grid">
 '''
@@ -360,6 +389,15 @@ html += '''    </div>
     });
 
     setMode(false);
+
+    const search = document.getElementById('search');
+    search.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      links.forEach(link => {
+        const name = link.textContent.toLowerCase();
+        link.classList.toggle('hidden', query && !name.includes(query));
+      });
+    });
   </script>
 </body>
 </html>'''
