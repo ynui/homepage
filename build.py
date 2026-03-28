@@ -3,7 +3,7 @@
 with open('services.yml') as f:
     content = f.read()
 
-title = 'Homelab'
+title = 'Home Page'
 services = []
 
 for line in content.split('\n'):

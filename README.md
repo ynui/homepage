@@ -1,6 +1,6 @@
-# Homelab UI
+# Homepage
 
-A minimal, clean homepage for homelab services.
+A minimal, clean homepage.
 
 ## Features
 
@@ -30,13 +30,13 @@ python3 -m http.server 8080
 Edit `services.yml`:
 
 ```yaml
-title: My Homelab     # Page title (optional, default: Homelab)
+title: My Homepage     # Page title (optional, default: Home Page)
 
 services:
-  - name: Radarr
-    url: https://radarr.example.com       # external URL
-    local: http://192.168.1.100:7878     # local URL (optional)
-    icon: 🎬                              # emoji icon
+  - name: service
+    url: https://service.example.com       # external URL
+    local: http://localhost:8080           # local URL (optional)
+    icon: 🛠                               # emoji icon
 ```
 
 ### Service Types
@@ -65,7 +65,7 @@ services:
 ```
 .
 ├── services.yml    # Service definitions
-├── build.py       # Build script
-├── index.html     # Generated output
-└── README.md      # This file
+├── build.py        # Build script
+├── index.html      # Generated output
+└── README.md       # This file
 ```
