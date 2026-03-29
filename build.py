@@ -224,6 +224,10 @@ html = f'''<!DOCTYPE html>
       transition: opacity 0.2s;
     }}
 
+    button:focus, .settings-dropdown:focus {{
+      outline: none;
+    }}
+
     .settings-btn:hover {{
       opacity: 1;
     }}
