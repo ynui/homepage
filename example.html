@@ -349,6 +349,7 @@ a:hover .icon {
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  cursor: pointer;
 }
 
 .hints-footer .separator {
@@ -553,6 +554,8 @@ modeIndicator.textContent = MODES[currentMode];
 setMode(currentMode);
 
 modeToggle.addEventListener('click', cycleMode);
+modeIndicator.style.cursor = 'pointer';
+modeIndicator.addEventListener('click', cycleMode);
 
 const toast = document.getElementById('toast');
 let longPressTimer;
