@@ -87,7 +87,7 @@ const modeIndicator = document.getElementById('modeIndicator');
 
 function cycleMode() {
   currentMode = (currentMode + 1) % 3;
-  modeToggle.textContent = `Mode: ${MODES[currentMode]}`;
+  modeToggle.querySelector('.value').textContent = MODES[currentMode];
   modeIndicator.textContent = MODES[currentMode];
   localStorage.setItem('homepage-mode', currentMode);
   setMode(currentMode);
@@ -96,7 +96,7 @@ function cycleMode() {
 }
 
 currentMode = parseInt(localStorage.getItem('homepage-mode')) || 0;
-modeToggle.textContent = `Mode: ${MODES[currentMode]}`;
+modeToggle.querySelector('.value').textContent = MODES[currentMode];
 modeIndicator.textContent = MODES[currentMode];
 setMode(currentMode);
 
@@ -265,7 +265,7 @@ const isLight = savedTheme ? savedTheme === 'light' : !prefersDark;
 
 function setTheme(light) {
   document.documentElement.classList.toggle('light', light);
-  themeToggle.textContent = `Theme: ${light ? '☀️' : '🌙'}`;
+  themeToggle.querySelector('.value').textContent = light ? '☀️' : '🌙';
   localStorage.setItem('homepage-theme', light ? 'light' : 'dark');
 }
 
@@ -282,7 +282,7 @@ const search = document.getElementById('search');
 const clockToggle = document.getElementById('clockToggle');
 
 function setClockFormat(is24) {
-  clockToggle.textContent = `Clock: ${is24 ? '24h' : '12h'}`;
+  clockToggle.querySelector('.value').textContent = is24 ? '24h' : '12h';
   localStorage.setItem('homepage-clock24', is24 ? 'true' : 'false');
   updateTime();
 }
@@ -299,7 +299,7 @@ const dateToggle = document.getElementById('dateToggle');
 
 function setDateVisible(visible) {
   document.getElementById('date').style.display = visible ? 'block' : 'none';
-  dateToggle.textContent = `Date: ${visible ? 'On' : 'Off'}`;
+  dateToggle.querySelector('.value').textContent = visible ? 'On' : 'Off';
   localStorage.setItem('homepage-date', visible ? 'true' : 'false');
 }
 
@@ -315,7 +315,7 @@ const searchToggle = document.getElementById('searchToggle');
 
 function setSearchVisible(visible) {
   search.classList.toggle('hidden', !visible);
-  searchToggle.textContent = `Search: ${visible ? 'On' : 'Off'}`;
+  searchToggle.querySelector('.value').textContent = visible ? 'On' : 'Off';
   localStorage.setItem('homepage-search', visible ? 'true' : 'false');
 }
 
@@ -331,7 +331,7 @@ const iconToggle = document.getElementById('iconToggle');
 
 function setIconsVisible(visible) {
   document.querySelectorAll('.icon').forEach(icon => icon.classList.toggle('hidden', !visible));
-  iconToggle.textContent = `Icons: ${visible ? 'On' : 'Off'}`;
+  iconToggle.querySelector('.value').textContent = visible ? 'On' : 'Off';
   localStorage.setItem('homepage-icons', visible ? 'true' : 'false');
 }
 
@@ -347,7 +347,7 @@ const compactToggle = document.getElementById('compactToggle');
 
 function setCompact(compact) {
   document.body.classList.toggle('compact', compact);
-  compactToggle.textContent = `Compact: ${compact ? 'On' : 'Off'}`;
+  compactToggle.querySelector('.value').textContent = compact ? 'On' : 'Off';
   localStorage.setItem('homepage-compact', compact ? 'true' : 'false');
 }
 

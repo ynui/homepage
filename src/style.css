@@ -146,7 +146,7 @@ button:focus, .settings-dropdown:focus {
   border: 1px solid var(--card-border);
   border-radius: 8px;
   padding: 0.5rem;
-  min-width: 160px;
+  min-width: 180px;
   display: none;
   z-index: 100;
 }
@@ -156,17 +156,28 @@ button:focus, .settings-dropdown:focus {
 }
 
 .settings-option {
-  display: block;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
   background: none;
   border: none;
   color: var(--text);
   padding: 0.5rem 0.75rem;
-  text-align: left;
   font-family: inherit;
   font-size: 0.75rem;
   cursor: pointer;
   border-radius: 4px;
+}
+
+.settings-option .label {
+  text-align: left;
+}
+
+.settings-option .value {
+  text-align: right;
+  color: var(--accent);
+  min-width: 50px;
 }
 
 .settings-option:hover {
