@@ -4,11 +4,12 @@ A minimal, keyboard-friendly homepage dashboard.
 
 ## Features
 
-- Clean, dark-themed UI
+- Clean, dark-themed UI with light mode option
 - External/Local toggle for different network environments
 - Search/filter services with type-to-jump
 - Drag to reorder services (persists in browser)
 - Long-press (500ms) to copy service URL on mobile
+- Customizable via settings panel
 
 ## Quick Start
 
@@ -29,7 +30,7 @@ title: My Homepage
 
 services:
   - name: ServiceName
-    url: https://service.example.com    # external URL
+    url: https://service.example.com    # external URL (required)
     local: http://localhost:8080        # local URL (optional)
     icon: 🛠
 ```
@@ -39,6 +40,18 @@ services:
 - **url + local**: Shows in both modes, switches based on toggle
 - **url only**: Shows only in external mode
 - **local only**: Shows only in local mode
+
+### Settings
+
+Click the ⚙ button to access:
+- **Theme**: Toggle light/dark mode
+- **Clock**: Switch between 12h/24h format
+- **Date**: Show/hide date display
+- **Search**: Show/hide search bar
+- **Icons**: Show/hide service icons
+- **Compact**: Smaller cards for more services
+- **Clear custom order**: Reset service order to default
+- **Reset all settings**: Clear all saved preferences
 
 ### Keyboard Shortcuts
 
