@@ -264,6 +264,11 @@ html = f'''<!DOCTYPE html>
       color: var(--text-hover);
     }}
 
+    .settings-option.focused {{
+      background: var(--card-border);
+      color: var(--accent);
+    }}
+
     a.hidden {{
       display: none;
     }}
@@ -368,13 +373,54 @@ html = f'''<!DOCTYPE html>
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }}
+
+    .hints {{
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      z-index: 1000;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }}
+
+    .hints.show {{
+      display: block;
+    }}
+
+    .hints h2 {{
+      margin: 0 0 1rem;
+      font-size: 1rem;
+      color: var(--accent);
+    }}
+
+    .hint-row {{
+      display: flex;
+      justify-content: space-between;
+      gap: 2rem;
+      padding: 0.25rem 0;
+      color: var(--text);
+      font-size: 0.875rem;
+    }}
+
+    .hint-row .key {{
+      background: var(--border);
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      color: var(--accent);
+    }}
   </style>
 </head>
 <body>
   <main>
     <div class="settings">
       <button id="settingsBtn" class="settings-btn">⚙</button>
-      <div id="settingsDropdown" class="settings-dropdown">
+      <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
         <button id="themeToggle" class="settings-option">Theme: 🌙</button>
         <button id="clockToggle" class="settings-option">Clock: 24h</button>
         <button id="dateToggle" class="settings-option">Date: On</button>
@@ -411,6 +457,16 @@ for s in services:
 html += '''    </div>
   </main>
   <div class="toast" id="toast">Copied!</div>
+    <div class="hints" id="hints">
+    <h2>Keyboard Shortcuts</h2>
+    <div class="hint-row"><span class="key">↑↓←→</span><span>Navigate apps</span></div>
+    <div class="hint-row"><span class="key">Enter</span><span>Open selected</span></div>
+    <div class="hint-row"><span class="key">/</span><span>Toggle Local/External</span></div>
+    <div class="hint-row"><span class="key">,</span><span>Open settings</span></div>
+    <div class="hint-row"><span class="key">Type</span><span>Search apps</span></div>
+    <div class="hint-row"><span class="key">Esc</span><span>Clear / Close</span></div>
+    <div class="hint-row"><span class="key">?</span><span>Show shortcuts</span></div>
+  </div>
   <script>
     function updateTime() {
       const now = new Date();
@@ -581,17 +637,50 @@ html += '''    </div>
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       settingsDropdown.classList.toggle('show');
+      if (settingsDropdown.classList.contains('show')) {
+        settingsFocusIndex = 0;
+        settingsOptions.forEach((opt, i) => opt.classList.toggle('focused', i === 0));
+        settingsDropdown.focus();
+      }
     });
 
-    document.addEventListener('click', () => {
-      settingsDropdown.classList.remove('show');
+    let settingsFocusIndex = -1;
+    const settingsOptions = [...document.querySelectorAll('.settings-option')];
+
+    settingsDropdown.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        settingsFocusIndex = Math.min(settingsFocusIndex + 1, settingsOptions.length - 1);
+        settingsOptions.forEach((opt, i) => opt.classList.toggle('focused', i === settingsFocusIndex));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        settingsFocusIndex = Math.max(settingsFocusIndex - 1, 0);
+        settingsOptions.forEach((opt, i) => opt.classList.toggle('focused', i === settingsFocusIndex));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (settingsFocusIndex >= 0) settingsOptions[settingsFocusIndex].click();
+      } else if (e.key === 'Escape') {
+        settingsDropdown.classList.remove('show');
+      }
+    });
+
+    settingsOptions.forEach((opt, i) => {
+      opt.addEventListener('mouseenter', () => {
+        settingsFocusIndex = i;
+        settingsOptions.forEach((o, j) => o.classList.toggle('focused', j === i));
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!settingsDropdown.contains(e.target) && e.target !== settingsBtn) {
+        settingsDropdown.classList.remove('show');
+      }
     });
 
     clearOrder.addEventListener('click', () => {
       localStorage.removeItem('homepage-order');
       links.forEach(link => grid.appendChild(link));
       showToast('Order reset');
-      settingsDropdown.classList.remove('show');
     });
 
     resetAll.addEventListener('click', () => {
@@ -615,7 +704,7 @@ html += '''    </div>
     themeToggle.addEventListener('click', () => {
       const isCurrentlyLight = document.documentElement.classList.contains('light');
       setTheme(!isCurrentlyLight);
-      settingsDropdown.classList.remove('show');
+      showToast(`Theme: ${!isCurrentlyLight ? 'Light' : 'Dark'}`);
     });
 
     const search = document.getElementById('search');
@@ -633,7 +722,7 @@ html += '''    </div>
     clockToggle.addEventListener('click', () => {
       const is24 = localStorage.getItem('homepage-clock24') !== 'false';
       setClockFormat(!is24);
-      settingsDropdown.classList.remove('show');
+      showToast(`Clock: ${!is24 ? '24h' : '12h'}`);
     });
 
     const dateToggle = document.getElementById('dateToggle');
@@ -649,7 +738,7 @@ html += '''    </div>
     dateToggle.addEventListener('click', () => {
       const isVisible = document.getElementById('date').style.display !== 'none';
       setDateVisible(!isVisible);
-      settingsDropdown.classList.remove('show');
+      showToast(`Date: ${!isVisible ? 'On' : 'Off'}`);
     });
 
     const searchToggle = document.getElementById('searchToggle');
@@ -665,7 +754,7 @@ html += '''    </div>
     searchToggle.addEventListener('click', () => {
       const isVisible = search.classList.contains('hidden') === false;
       setSearchVisible(!isVisible);
-      settingsDropdown.classList.remove('show');
+      showToast(`Search: ${!isVisible ? 'On' : 'Off'}`);
     });
 
     const iconToggle = document.getElementById('iconToggle');
@@ -681,7 +770,7 @@ html += '''    </div>
     iconToggle.addEventListener('click', () => {
       const isVisible = document.querySelector('.icon.hidden') === null;
       setIconsVisible(!isVisible);
-      settingsDropdown.classList.remove('show');
+      showToast(`Icons: ${!isVisible ? 'On' : 'Off'}`);
     });
 
     const compactToggle = document.getElementById('compactToggle');
@@ -697,7 +786,7 @@ html += '''    </div>
     compactToggle.addEventListener('click', () => {
       const isCompact = document.body.classList.contains('compact');
       setCompact(!isCompact);
-      settingsDropdown.classList.remove('show');
+      showToast(`Compact: ${!isCompact ? 'On' : 'Off'}`);
     });
 
     let selectedIndex = -1;
@@ -737,6 +826,20 @@ html += '''    </div>
     search.addEventListener('input', (e) => filterServices(e.target.value));
 
     search.addEventListener('keydown', (e) => {
+      if (e.key === '/') {
+        e.preventDefault();
+        return;
+      }
+      if (e.key === ',') {
+        e.preventDefault();
+        search.blur();
+        settingsDropdown.classList.toggle('show');
+        if (settingsDropdown.classList.contains('show')) {
+          settingsFocusIndex = -1;
+          settingsDropdown.focus();
+        }
+        return;
+      }
       const visibleLinks = [...links].filter(l => !l.classList.contains('hidden'));
       if (visibleLinks.length === 0) return;
       const gridWidth = grid.clientWidth - 24;
@@ -769,7 +872,40 @@ html += '''    </div>
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT') return;
+      const hints = document.getElementById('hints');
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault();
+        hints.classList.toggle('show');
+        return;
+      }
+      if (hints.classList.contains('show')) {
+        hints.classList.remove('show');
+      }
+      if (settingsDropdown.classList.contains('show')) {
+        return;
+      }
+      if (e.target.tagName === 'INPUT') {
+        if (e.key === '/') {
+          e.preventDefault();
+          toggle.checked = !toggle.checked;
+          modeLabel.textContent = toggle.checked ? 'Local' : 'External';
+          setMode(toggle.checked);
+          filterServices(search.value);
+          return;
+        }
+        if (e.key === ',') {
+          e.preventDefault();
+          search.blur();
+          settingsDropdown.classList.toggle('show');
+          if (settingsDropdown.classList.contains('show')) {
+            settingsFocusIndex = 0;
+            settingsOptions.forEach((opt, i) => opt.classList.toggle('focused', i === 0));
+            settingsDropdown.focus();
+          }
+          return;
+        }
+        return;
+      }
       const visibleLinks = [...links].filter(l => !l.classList.contains('hidden'));
       if (visibleLinks.length === 0) return;
       const gridWidth = grid.clientWidth - 24;
@@ -801,10 +937,24 @@ html += '''    </div>
         return;
       }
       if (e.key === 'Escape') {
+        if (settingsDropdown.classList.contains('show')) {
+          settingsDropdown.classList.remove('show');
+          return;
+        }
         search.value = '';
         filterServices('');
         search.blur();
         links.forEach(l => l.classList.remove('selected'));
+        return;
+      }
+      if (e.key === ',') {
+        e.preventDefault();
+        settingsDropdown.classList.toggle('show');
+        if (settingsDropdown.classList.contains('show')) {
+          settingsFocusIndex = 0;
+          settingsOptions.forEach((opt, i) => opt.classList.toggle('focused', i === 0));
+          settingsDropdown.focus();
+        }
         return;
       }
       if (e.key === '/') {
