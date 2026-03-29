@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>">
+  <style>
+{{css}}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="settings">
+      <button id="settingsBtn" class="settings-btn">⚙</button>
+      <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
+        <button id="themeToggle" class="settings-option">Theme: 🌙</button>
+        <button id="clockToggle" class="settings-option">Clock: 24h</button>
+        <button id="dateToggle" class="settings-option">Date: On</button>
+        <button id="searchToggle" class="settings-option">Search: On</button>
+        <button id="iconToggle" class="settings-option">Icons: On</button>
+        <button id="compactToggle" class="settings-option">Compact: Off</button>
+        <button id="clearOrder" class="settings-option">Clear custom order</button>
+        <button id="resetAll" class="settings-option">Reset all settings</button>
+      </div>
+    </div>
+    <header>
+      <h1>{{title}}</h1>
+      <div class="time" id="time"></div>
+      <div class="date" id="date"></div>
+      <label class="toggle">
+        <input type="checkbox" id="modeToggle" class="toggle-input">
+        <span class="toggle-switch"></span>
+        <span id="modeLabel" class="toggle-label">External</span>
+      </label>
+      <input type="text" id="search" class="search" placeholder="Type to jump...">
+    </header>
+    <div class="grid">
+{{services}}
+    </div>
+  </main>
+  <div class="toast" id="toast">Copied!</div>
+  <div class="hints" id="hints">
+    <h2>Keyboard Shortcuts</h2>
+    <div class="hint-row"><span class="key">↑↓←→</span><span>Navigate apps</span></div>
+    <div class="hint-row"><span class="key">Enter</span><span>Open selected</span></div>
+    <div class="hint-row"><span class="key">/</span><span>Toggle Local/External</span></div>
+    <div class="hint-row"><span class="key">,</span><span>Open settings</span></div>
+    <div class="hint-row"><span class="key">Type</span><span>Search apps</span></div>
+    <div class="hint-row"><span class="key">Esc</span><span>Clear / Close</span></div>
+    <div class="hint-row"><span class="key">?</span><span>Show shortcuts</span></div>
+  </div>
+  <script>
+{{js}}
+  </script>
+</body>
+</html>
