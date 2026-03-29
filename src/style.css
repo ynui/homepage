@@ -341,7 +341,6 @@ a:hover .icon {
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  cursor: pointer;
 }
 
 .hints-footer .separator {
@@ -353,6 +352,7 @@ a:hover .icon {
   font-size: 0.65rem;
   color: var(--text);
   opacity: 0.5;
+  cursor: pointer;
 }
 
 .hints-footer .key {

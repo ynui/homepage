@@ -101,8 +101,6 @@ modeIndicator.textContent = MODES[currentMode];
 setMode(currentMode);
 
 modeToggle.addEventListener('click', cycleMode);
-modeIndicator.style.cursor = 'pointer';
-modeIndicator.addEventListener('click', cycleMode);
 
 const toast = document.getElementById('toast');
 let longPressTimer;
@@ -192,6 +190,29 @@ settingsBtn.addEventListener('click', (e) => {
   }
 });
 
+const hintMode = document.getElementById('hintMode');
+const hintSettings = document.getElementById('hintSettings');
+const hintHelp = document.getElementById('hintHelp');
+const hintsOverlay = document.getElementById('hints');
+
+hintMode.addEventListener('click', (e) => {
+  e.stopPropagation();
+  cycleMode();
+});
+hintSettings.addEventListener('click', (e) => {
+  e.stopPropagation();
+  settingsDropdown.classList.toggle('show');
+  if (settingsDropdown.classList.contains('show')) {
+    settingsFocusIndex = 0;
+    settingsOptions.forEach((opt, i) => opt.classList.toggle('focused', i === 0));
+    settingsDropdown.focus();
+  }
+});
+hintHelp.addEventListener('click', (e) => {
+  e.stopPropagation();
+  hintsOverlay.classList.toggle('show');
+});
+
 let settingsFocusIndex = -1;
 const settingsOptions = [...document.querySelectorAll('.settings-option')];
 
@@ -220,7 +241,8 @@ settingsOptions.forEach((opt, i) => {
 });
 
 document.addEventListener('click', (e) => {
-  if (!settingsDropdown.contains(e.target) && e.target !== settingsBtn) {
+  const isFooterHint = e.target.closest('.hints-footer');
+  if (!settingsDropdown.contains(e.target) && e.target !== settingsBtn && !isFooterHint) {
     settingsDropdown.classList.remove('show');
   }
 });
