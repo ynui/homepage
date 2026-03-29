@@ -704,10 +704,15 @@ html += '''    </div>
 
     function filterServices(query) {
       const q = query.toLowerCase();
+      const isLocal = toggle.checked;
       let visibleLinks = [];
       links.forEach(link => {
+        const type = link.dataset.type;
+        let isTypeMatch = true;
+        if (type === 'local') isTypeMatch = isLocal;
+        else if (type === 'external') isTypeMatch = !isLocal;
         const name = link.textContent.toLowerCase();
-        const isMatch = !q || name.includes(q);
+        const isMatch = isTypeMatch && (!q || name.includes(q));
         link.classList.toggle('hidden', !isMatch);
         if (isMatch) visibleLinks.push(link);
       });
@@ -733,11 +738,23 @@ html += '''    </div>
 
     search.addEventListener('keydown', (e) => {
       const visibleLinks = [...links].filter(l => !l.classList.contains('hidden'));
+      if (visibleLinks.length === 0) return;
+      const gridWidth = grid.clientWidth - 24;
+      const itemWidth = 147;
+      const cols = Math.floor(gridWidth / itemWidth) || 1;
       if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + cols, visibleLinks.length - 1);
+        updateSelection(visibleLinks);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - cols, 0);
+        updateSelection(visibleLinks);
+      } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         selectedIndex = Math.min(selectedIndex + 1, visibleLinks.length - 1);
         updateSelection(visibleLinks);
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
         selectedIndex = Math.max(selectedIndex - 1, 0);
         updateSelection(visibleLinks);
@@ -753,11 +770,49 @@ html += '''    </div>
 
     document.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT') return;
+      const visibleLinks = [...links].filter(l => !l.classList.contains('hidden'));
+      if (visibleLinks.length === 0) return;
+      const gridWidth = grid.clientWidth - 24;
+      const itemWidth = 147;
+      const cols = Math.floor(gridWidth / itemWidth) || 1;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + cols, visibleLinks.length - 1);
+        updateSelection(visibleLinks);
+        return;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - cols, 0);
+        updateSelection(visibleLinks);
+        return;
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, visibleLinks.length - 1);
+        updateSelection(visibleLinks);
+        return;
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        updateSelection(visibleLinks);
+        return;
+      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        openSelected();
+        return;
+      }
       if (e.key === 'Escape') {
         search.value = '';
         filterServices('');
         search.blur();
         links.forEach(l => l.classList.remove('selected'));
+        return;
+      }
+      if (e.key === '/') {
+        e.preventDefault();
+        toggle.checked = !toggle.checked;
+        modeLabel.textContent = toggle.checked ? 'Local' : 'External';
+        setMode(toggle.checked);
+        filterServices(search.value);
         return;
       }
       if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
