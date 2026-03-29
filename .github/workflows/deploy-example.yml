@@ -3,9 +3,12 @@ name: Deploy Example
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'build.py'
+      - 'services.example.yml'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -14,12 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref: main
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
         python-version: '3.x'
     - name: Build example
       run: python3 build.py --example
+    - name: Commit example.html
+      run: |
+        if ! git diff --quiet example.html; then
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add example.html
+          git commit -m "Update example.html"
+          git push
+        fi
     - name: Prepare artifact
       run: mkdir _site && cp example.html _site/index.html
     - name: Upload artifact

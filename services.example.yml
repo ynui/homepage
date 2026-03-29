@@ -20,11 +20,11 @@ services:
     url: https://domain.com
     icon: 🌐
 
-  - name: External2
+  - name: External 2
     url: https://domain.com
     icon: 🌐
 
-  - name: External3
+  - name: External 3
     url: https://domain.com
     icon: 🌐
 
