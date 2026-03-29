@@ -55,18 +55,20 @@ h1 {
 }
 
 .time {
-  font-size: 2.5rem;
-  font-weight: 300;
+  font-size: 4rem;
+  font-weight: 200;
   color: var(--text-hover);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
 }
 
 .date {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   color: var(--text);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
+  opacity: 0.6;
 }
 
 .date.hidden {
@@ -85,16 +87,16 @@ h1 {
 }
 
 .search {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   width: 100%;
-  max-width: 280px;
-  padding: 0.75rem 1rem;
+  max-width: 320px;
+  padding: 1rem 1.25rem;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--text);
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 1rem;
   text-align: center;
   outline: none;
   transition: border-color 0.2s;
@@ -333,22 +335,12 @@ a:hover .icon {
   border-top: 1px solid var(--card-border);
 }
 
-.hints-footer .mode-badge {
+.hints-footer .mode-indicator {
   font-size: 0.65rem;
   color: var(--text);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  padding: 0.4rem 0.75rem;
-  border-radius: 20px;
+  opacity: 0.5;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.hints-footer .mode-badge:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  letter-spacing: 0.05em;
 }
 
 .hints-footer .separator {

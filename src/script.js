@@ -101,7 +101,6 @@ modeIndicator.textContent = MODES[currentMode];
 setMode(currentMode);
 
 modeToggle.addEventListener('click', cycleMode);
-modeIndicator.addEventListener('click', cycleMode);
 
 const toast = document.getElementById('toast');
 let longPressTimer;
