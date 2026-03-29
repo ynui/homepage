@@ -14,9 +14,12 @@ function updateTime() {
 updateTime();
 setInterval(updateTime, 1000);
 
-const toggle = document.getElementById('modeToggle');
+const modeToggle = document.getElementById('modeToggle');
 const grid = document.querySelector('.grid');
 const links = [...document.querySelectorAll('.grid a')];
+
+const MODES = ['External', 'Local', 'All'];
+let currentMode = 0;
 
 let draggedItem = null;
 
@@ -62,27 +65,43 @@ links.forEach(link => {
   });
 });
 
-function setMode(local) {
+function setMode(mode) {
+  const isLocal = mode === 1;
+  const isAll = mode === 2;
   links.forEach(link => {
     const type = link.dataset.type;
     if (type === 'both') {
-      link.href = local ? link.dataset.local : link.dataset.external;
+      link.href = isLocal ? link.dataset.local : link.dataset.external;
       link.classList.remove('hidden');
     } else if (type === 'local') {
       link.href = link.dataset.local;
-      link.classList.toggle('hidden', !local);
+      link.classList.toggle('hidden', !isLocal && !isAll);
     } else if (type === 'external') {
       link.href = link.dataset.external;
-      link.classList.toggle('hidden', local);
+      link.classList.toggle('hidden', isLocal && !isAll);
     }
   });
 }
 
-const modeLabel = document.getElementById('modeLabel');
-toggle.addEventListener('change', (e) => {
-  modeLabel.textContent = e.target.checked ? 'Local' : 'External';
-  setMode(e.target.checked);
-});
+const modeIndicator = document.getElementById('modeIndicator');
+
+function cycleMode() {
+  currentMode = (currentMode + 1) % 3;
+  modeToggle.textContent = `Mode: ${MODES[currentMode]}`;
+  modeIndicator.textContent = MODES[currentMode];
+  localStorage.setItem('homepage-mode', currentMode);
+  setMode(currentMode);
+  filterServices(search.value);
+  showToast(`Mode: ${MODES[currentMode]}`);
+}
+
+currentMode = parseInt(localStorage.getItem('homepage-mode')) || 0;
+modeToggle.textContent = `Mode: ${MODES[currentMode]}`;
+modeIndicator.textContent = MODES[currentMode];
+setMode(currentMode);
+
+modeToggle.addEventListener('click', cycleMode);
+modeIndicator.addEventListener('click', cycleMode);
 
 const toast = document.getElementById('toast');
 let longPressTimer;
@@ -156,8 +175,6 @@ links.forEach(link => {
   link.addEventListener('touchend', endPress);
   link.addEventListener('contextmenu', handleContextMenu);
 });
-
-setMode(false);
 
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsDropdown = document.getElementById('settingsDropdown');
@@ -323,13 +340,14 @@ let selectedIndex = -1;
 
 function filterServices(query) {
   const q = query.toLowerCase();
-  const isLocal = toggle.checked;
+  const isLocal = currentMode === 1;
+  const isAll = currentMode === 2;
   let visibleLinks = [];
   links.forEach(link => {
     const type = link.dataset.type;
     let isTypeMatch = true;
-    if (type === 'local') isTypeMatch = isLocal;
-    else if (type === 'external') isTypeMatch = !isLocal;
+    if (type === 'local') isTypeMatch = isLocal || isAll;
+    else if (type === 'external') isTypeMatch = !isLocal || isAll;
     const name = link.textContent.toLowerCase();
     const isMatch = isTypeMatch && (!q || name.includes(q));
     link.classList.toggle('hidden', !isMatch);
@@ -417,10 +435,7 @@ document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') {
     if (e.key === '/') {
       e.preventDefault();
-      toggle.checked = !toggle.checked;
-      modeLabel.textContent = toggle.checked ? 'Local' : 'External';
-      setMode(toggle.checked);
-      filterServices(search.value);
+      cycleMode();
       return;
     }
     if (e.key === ',') {
@@ -489,10 +504,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === '/') {
     e.preventDefault();
-    toggle.checked = !toggle.checked;
-    modeLabel.textContent = toggle.checked ? 'Local' : 'External';
-    setMode(toggle.checked);
-    filterServices(search.value);
+    cycleMode();
     return;
   }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {

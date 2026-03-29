@@ -12,9 +12,11 @@
 <body>
   <main>
     <div class="settings">
+      <span class="mode-indicator" id="modeIndicator">External</span>
       <button id="settingsBtn" class="settings-btn">⚙</button>
       <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
         <button id="themeToggle" class="settings-option">Theme: 🌙</button>
+        <button id="modeToggle" class="settings-option">Mode: External</button>
         <button id="clockToggle" class="settings-option">Clock: 24h</button>
         <button id="dateToggle" class="settings-option">Date: On</button>
         <button id="searchToggle" class="settings-option">Search: On</button>
@@ -28,11 +30,6 @@
       <h1 id="headerTitle">{{header}}</h1>
       <div class="time" id="time"></div>
       <div class="date" id="date"></div>
-      <label class="toggle">
-        <input type="checkbox" id="modeToggle" class="toggle-input">
-        <span class="toggle-switch"></span>
-        <span id="modeLabel" class="toggle-label">External</span>
-      </label>
       <input type="text" id="search" class="search" placeholder="Type to jump...">
     </header>
     <div class="grid">
@@ -44,7 +41,7 @@
     <h2>Keyboard Shortcuts</h2>
     <div class="hint-row"><span class="key">↑↓←→</span><span>Navigate apps</span></div>
     <div class="hint-row"><span class="key">Enter</span><span>Open selected</span></div>
-    <div class="hint-row"><span class="key">/</span><span>Toggle Local/External</span></div>
+    <div class="hint-row"><span class="key">/</span><span>Cycle mode</span></div>
     <div class="hint-row"><span class="key">,</span><span>Open settings</span></div>
     <div class="hint-row"><span class="key">Type</span><span>Search apps</span></div>
     <div class="hint-row"><span class="key">Esc</span><span>Clear / Close</span></div>
