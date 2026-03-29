@@ -115,6 +115,18 @@ html = f'''<!DOCTYPE html>
       letter-spacing: 0.05em;
     }}
 
+    .date {{
+      font-size: 0.7rem;
+      color: var(--text);
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }}
+
+    .date.hidden {{
+      display: none;
+    }}
+
     .toggle {{
       display: flex;
       flex-direction: column;
@@ -365,6 +377,7 @@ html = f'''<!DOCTYPE html>
       <div id="settingsDropdown" class="settings-dropdown">
         <button id="themeToggle" class="settings-option">Theme: 🌙</button>
         <button id="clockToggle" class="settings-option">Clock: 24h</button>
+        <button id="dateToggle" class="settings-option">Date: On</button>
         <button id="searchToggle" class="settings-option">Search: On</button>
         <button id="iconToggle" class="settings-option">Icons: On</button>
         <button id="compactToggle" class="settings-option">Compact: Off</button>
@@ -375,6 +388,7 @@ html = f'''<!DOCTYPE html>
     <header>
       <h1>{title}</h1>
       <div class="time" id="time"></div>
+      <div class="date" id="date"></div>
       <label class="toggle">
         <input type="checkbox" id="modeToggle" class="toggle-input">
         <span class="toggle-switch"></span>
@@ -406,6 +420,10 @@ html += '''    </div>
         hour: '2-digit', 
         minute: '2-digit' 
       });
+      const dateEl = document.getElementById('date');
+      if (dateEl) {
+        dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      }
     }
     updateTime();
     setInterval(updateTime, 1000);
@@ -615,6 +633,22 @@ html += '''    </div>
     clockToggle.addEventListener('click', () => {
       const is24 = localStorage.getItem('homepage-clock24') !== 'false';
       setClockFormat(!is24);
+      settingsDropdown.classList.remove('show');
+    });
+
+    const dateToggle = document.getElementById('dateToggle');
+
+    function setDateVisible(visible) {
+      document.getElementById('date').style.display = visible ? 'block' : 'none';
+      dateToggle.textContent = `Date: ${visible ? 'On' : 'Off'}`;
+      localStorage.setItem('homepage-date', visible ? 'true' : 'false');
+    }
+
+    setDateVisible(localStorage.getItem('homepage-date') !== 'false');
+
+    dateToggle.addEventListener('click', () => {
+      const isVisible = document.getElementById('date').style.display !== 'none';
+      setDateVisible(!isVisible);
       settingsDropdown.classList.remove('show');
     });
 
