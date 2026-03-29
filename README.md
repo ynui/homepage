@@ -5,7 +5,7 @@ A minimal, keyboard-friendly homepage dashboard.
 ## Features
 
 - Clean, dark-themed UI with light mode option
-- External/Local toggle for different network environments
+- External/Local/All mode toggle (3 states)
 - Search/filter services with type-to-jump
 - Drag to reorder services (persists in browser)
 - Long-press (500ms) to copy service URL on mobile
@@ -26,7 +26,8 @@ python3 build.py
 Edit `services.yml`:
 
 ```yaml
-title: My Homepage
+title: My Homepage     # Browser tab title
+header: Dashboard       # Header display (optional, defaults to title)
 
 services:
   - name: ServiceName
@@ -37,14 +38,15 @@ services:
 
 ### Service Types
 
-- **url + local**: Shows in both modes, switches based on toggle
+- **url + local**: Shows in all modes, switches URL based on mode
 - **url only**: Shows only in external mode
 - **local only**: Shows only in local mode
 
 ### Settings
 
-Click the ⚙ button to access:
+Click the ⚙ button or press `,` to access:
 - **Theme**: Toggle light/dark mode
+- **Mode**: Cycle External → Local → All
 - **Clock**: Switch between 12h/24h format
 - **Date**: Show/hide date display
 - **Search**: Show/hide search bar
@@ -59,8 +61,8 @@ Click the ⚙ button to access:
 - **Arrow Keys**: Navigate filtered results (or settings when open)
 - **Enter**: Open selected service (or activate settings option)
 - **Esc**: Clear search / Close settings / Close hints
-- **,**: Open settings panel
-- **/**: Toggle Local/External mode
+- **,**: Toggle settings panel
+- **/**: Cycle mode (External → Local → All)
 - **?**: Show keyboard shortcuts overlay
 
 ### Mobile
@@ -80,9 +82,13 @@ python3 build.py
 
 ```
 .
+├── src/
+│   ├── template.html   # HTML template
+│   ├── style.css       # Styles
+│   └── script.js       # JavaScript
 ├── services.yml         # Service definitions
 ├── services.example.yml # Example config
-├── build.py             # Build script
-├── index.html           # Generated output (do not edit)
+├── build.py            # Build script
+├── index.html          # Generated output (do not edit)
 └── README.md
 ```

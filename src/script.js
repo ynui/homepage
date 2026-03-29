@@ -430,6 +430,11 @@ document.addEventListener('keydown', (e) => {
     hints.classList.remove('show');
   }
   if (settingsDropdown.classList.contains('show')) {
+    if (e.key === ',') {
+      e.preventDefault();
+      settingsDropdown.classList.remove('show');
+      return;
+    }
     return;
   }
   if (e.target.tagName === 'INPUT') {

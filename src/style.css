@@ -84,51 +84,6 @@ h1 {
   user-select: none;
 }
 
-.toggle-input {
-  display: none;
-}
-
-.toggle-switch {
-  width: 44px;
-  height: 24px;
-  background: #2a2a30;
-  border-radius: 12px;
-  position: relative;
-  transition: background 0.3s;
-  border: 1px solid #333;
-  cursor: pointer;
-}
-
-.toggle-switch::after {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  background: #666;
-  border-radius: 50%;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
-}
-
-.toggle-input:checked + .toggle-switch {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.toggle-input:checked + .toggle-switch::after {
-  transform: translateX(20px);
-  background: #fff;
-}
-
-.toggle-label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #444;
-  margin-top: 0.25rem;
-}
-
 .search {
   margin-top: 1.5rem;
   width: 100%;
@@ -160,14 +115,6 @@ h1 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.settings .mode-indicator {
-  font-size: 0.6rem;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  cursor: pointer;
 }
 
 .settings-btn {
@@ -374,4 +321,52 @@ a:hover .icon {
   border-radius: 4px;
   font-family: monospace;
   color: var(--accent);
+}
+
+.hints-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.hints-footer .mode-badge {
+  font-size: 0.65rem;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hints-footer .mode-badge:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.hints-footer .separator {
+  color: var(--card-border);
+  font-size: 0.65rem;
+}
+
+.hints-footer .hint {
+  font-size: 0.65rem;
+  color: var(--text);
+  opacity: 0.5;
+}
+
+.hints-footer .key {
+  background: var(--card-border);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-family: monospace;
+  color: var(--accent);
+  margin-right: 0.25rem;
 }

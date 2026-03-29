@@ -12,7 +12,6 @@
 <body>
   <main>
     <div class="settings">
-      <span class="mode-indicator" id="modeIndicator">External</span>
       <button id="settingsBtn" class="settings-btn">⚙</button>
       <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
         <button id="themeToggle" class="settings-option">Theme: 🌙</button>
@@ -35,6 +34,13 @@
     <div class="grid">
 {{services}}
     </div>
+    <footer class="hints-footer">
+      <span class="mode-badge" id="modeIndicator">External</span>
+      <span class="separator">|</span>
+      <span class="hint"><span class="key">/</span> mode</span>
+      <span class="hint"><span class="key">,</span> settings</span>
+      <span class="hint"><span class="key">?</span> help</span>
+    </footer>
   </main>
   <div class="toast" id="toast">Copied!</div>
   <div class="hints" id="hints">
