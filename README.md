@@ -56,9 +56,12 @@ Click the ⚙ button to access:
 ### Keyboard Shortcuts
 
 - **Type**: Filter services and jump to first result
-- **Arrow Keys**: Navigate filtered results
-- **Enter**: Open selected service
-- **Esc**: Clear search
+- **Arrow Keys**: Navigate filtered results (or settings when open)
+- **Enter**: Open selected service (or activate settings option)
+- **Esc**: Clear search / Close settings / Close hints
+- **,**: Open settings panel
+- **/**: Toggle Local/External mode
+- **?**: Show keyboard shortcuts overlay
 
 ### Mobile
 
