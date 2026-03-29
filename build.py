@@ -68,6 +68,16 @@ html = f'''<!DOCTYPE html>
       --accent-glow: rgba(99, 102, 241, 0.15);
     }}
 
+    :root.light {{
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --card-border: #e0e0e0;
+      --text: #666666;
+      --text-hover: #1a1a1a;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.1);
+    }}
+
     body {{
       font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
       background: var(--bg);
@@ -85,6 +95,7 @@ html = f'''<!DOCTYPE html>
     }}
 
     header {{
+      position: relative;
       text-align: center;
       margin-bottom: 3rem;
     }}
@@ -184,6 +195,63 @@ html = f'''<!DOCTYPE html>
       border-color: var(--accent);
     }}
 
+    .settings {{
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }}
+
+    .settings-btn {{
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 0.5rem;
+      font-size: 1rem;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }}
+
+    .settings-btn:hover {{
+      opacity: 1;
+    }}
+
+    .settings-dropdown {{
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      min-width: 160px;
+      display: none;
+      z-index: 100;
+    }}
+
+    .settings-dropdown.show {{
+      display: block;
+    }}
+
+    .settings-option {{
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-family: inherit;
+      font-size: 0.75rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }}
+
+    .settings-option:hover {{
+      background: var(--card-border);
+      color: var(--text-hover);
+    }}
+
     a.hidden {{
       display: none;
     }}
@@ -246,6 +314,28 @@ html = f'''<!DOCTYPE html>
       opacity: 1;
     }}
 
+    .search.hidden {{
+      display: none;
+    }}
+
+    .icon.hidden {{
+      display: none;
+    }}
+
+    .compact .grid a {{
+      width: 80px;
+      padding: 0.75rem 0.5rem;
+    }}
+
+    .compact .icon {{
+      font-size: 1rem;
+    }}
+
+    .compact a {{
+      padding: 0.75rem 0.5rem;
+      gap: 0.25rem;
+    }}
+
     .toast {{
       position: fixed;
       bottom: 2rem;
@@ -270,6 +360,18 @@ html = f'''<!DOCTYPE html>
 </head>
 <body>
   <main>
+    <div class="settings">
+      <button id="settingsBtn" class="settings-btn">⚙</button>
+      <div id="settingsDropdown" class="settings-dropdown">
+        <button id="themeToggle" class="settings-option">Theme: 🌙</button>
+        <button id="clockToggle" class="settings-option">Clock: 24h</button>
+        <button id="searchToggle" class="settings-option">Search: On</button>
+        <button id="iconToggle" class="settings-option">Icons: On</button>
+        <button id="compactToggle" class="settings-option">Compact: Off</button>
+        <button id="clearOrder" class="settings-option">Clear custom order</button>
+        <button id="resetAll" class="settings-option">Reset all settings</button>
+      </div>
+    </div>
     <header>
       <h1>{title}</h1>
       <div class="time" id="time"></div>
@@ -298,8 +400,9 @@ html += '''    </div>
   <script>
     function updateTime() {
       const now = new Date();
+      const is24h = localStorage.getItem('homepage-clock24') !== 'false';
       document.getElementById('time').textContent = now.toLocaleTimeString('en-US', { 
-        hour12: false, 
+        hour12: !is24h, 
         hour: '2-digit', 
         minute: '2-digit' 
       });
@@ -315,11 +418,11 @@ html += '''    </div>
 
     function saveOrder() {
       const order = [...grid.children].map(el => el.dataset.name);
-      localStorage.setItem('homelab-order', JSON.stringify(order));
+      localStorage.setItem('homepage-order', JSON.stringify(order));
     }
 
     function loadOrder() {
-      const saved = localStorage.getItem('homelab-order');
+      const saved = localStorage.getItem('homepage-order');
       if (saved) {
         const order = JSON.parse(saved);
         order.forEach(name => {
@@ -452,7 +555,117 @@ html += '''    </div>
 
     setMode(false);
 
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsDropdown = document.getElementById('settingsDropdown');
+    const clearOrder = document.getElementById('clearOrder');
+    const resetAll = document.getElementById('resetAll');
+
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsDropdown.classList.toggle('show');
+    });
+
+    document.addEventListener('click', () => {
+      settingsDropdown.classList.remove('show');
+    });
+
+    clearOrder.addEventListener('click', () => {
+      localStorage.removeItem('homepage-order');
+      links.forEach(link => grid.appendChild(link));
+      showToast('Order reset');
+      settingsDropdown.classList.remove('show');
+    });
+
+    resetAll.addEventListener('click', () => {
+      localStorage.clear();
+      location.reload();
+    });
+
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('homepage-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isLight = savedTheme ? savedTheme === 'light' : !prefersDark;
+
+    function setTheme(light) {
+      document.documentElement.classList.toggle('light', light);
+      themeToggle.textContent = `Theme: ${light ? '☀️' : '🌙'}`;
+      localStorage.setItem('homepage-theme', light ? 'light' : 'dark');
+    }
+
+    setTheme(isLight);
+
+    themeToggle.addEventListener('click', () => {
+      const isCurrentlyLight = document.documentElement.classList.contains('light');
+      setTheme(!isCurrentlyLight);
+      settingsDropdown.classList.remove('show');
+    });
+
     const search = document.getElementById('search');
+
+    const clockToggle = document.getElementById('clockToggle');
+
+    function setClockFormat(is24) {
+      clockToggle.textContent = `Clock: ${is24 ? '24h' : '12h'}`;
+      localStorage.setItem('homepage-clock24', is24 ? 'true' : 'false');
+      updateTime();
+    }
+
+    setClockFormat(localStorage.getItem('homepage-clock24') !== 'false');
+
+    clockToggle.addEventListener('click', () => {
+      const is24 = localStorage.getItem('homepage-clock24') !== 'false';
+      setClockFormat(!is24);
+      settingsDropdown.classList.remove('show');
+    });
+
+    const searchToggle = document.getElementById('searchToggle');
+
+    function setSearchVisible(visible) {
+      search.classList.toggle('hidden', !visible);
+      searchToggle.textContent = `Search: ${visible ? 'On' : 'Off'}`;
+      localStorage.setItem('homepage-search', visible ? 'true' : 'false');
+    }
+
+    setSearchVisible(localStorage.getItem('homepage-search') !== 'false');
+
+    searchToggle.addEventListener('click', () => {
+      const isVisible = search.classList.contains('hidden') === false;
+      setSearchVisible(!isVisible);
+      settingsDropdown.classList.remove('show');
+    });
+
+    const iconToggle = document.getElementById('iconToggle');
+
+    function setIconsVisible(visible) {
+      document.querySelectorAll('.icon').forEach(icon => icon.classList.toggle('hidden', !visible));
+      iconToggle.textContent = `Icons: ${visible ? 'On' : 'Off'}`;
+      localStorage.setItem('homepage-icons', visible ? 'true' : 'false');
+    }
+
+    setIconsVisible(localStorage.getItem('homepage-icons') !== 'false');
+
+    iconToggle.addEventListener('click', () => {
+      const isVisible = document.querySelector('.icon.hidden') === null;
+      setIconsVisible(!isVisible);
+      settingsDropdown.classList.remove('show');
+    });
+
+    const compactToggle = document.getElementById('compactToggle');
+
+    function setCompact(compact) {
+      document.body.classList.toggle('compact', compact);
+      compactToggle.textContent = `Compact: ${compact ? 'On' : 'Off'}`;
+      localStorage.setItem('homepage-compact', compact ? 'true' : 'false');
+    }
+
+    setCompact(localStorage.getItem('homepage-compact') === 'true');
+
+    compactToggle.addEventListener('click', () => {
+      const isCompact = document.body.classList.contains('compact');
+      setCompact(!isCompact);
+      settingsDropdown.classList.remove('show');
+    });
+
     let selectedIndex = -1;
 
     function filterServices(query) {
