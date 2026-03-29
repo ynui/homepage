@@ -154,7 +154,7 @@ button:focus, .settings-dropdown:focus {
   border: 1px solid var(--card-border);
   border-radius: 8px;
   padding: 0.5rem;
-  min-width: 160px;
+  min-width: 180px;
   display: none;
   z-index: 100;
 }
@@ -164,17 +164,28 @@ button:focus, .settings-dropdown:focus {
 }
 
 .settings-option {
-  display: block;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
   background: none;
   border: none;
   color: var(--text);
   padding: 0.5rem 0.75rem;
-  text-align: left;
   font-family: inherit;
   font-size: 0.75rem;
   cursor: pointer;
   border-radius: 4px;
+}
+
+.settings-option .label {
+  text-align: left;
+}
+
+.settings-option .value {
+  text-align: right;
+  color: var(--accent);
+  min-width: 50px;
 }
 
 .settings-option:hover {
@@ -389,13 +400,13 @@ body {
     <div class="settings">
       <button id="settingsBtn" class="settings-btn">⚙</button>
       <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
-        <button id="themeToggle" class="settings-option">Theme: 🌙</button>
-        <button id="modeToggle" class="settings-option">Mode: External</button>
-        <button id="clockToggle" class="settings-option">Clock: 24h</button>
-        <button id="dateToggle" class="settings-option">Date: On</button>
-        <button id="searchToggle" class="settings-option">Search: On</button>
-        <button id="iconToggle" class="settings-option">Icons: On</button>
-        <button id="compactToggle" class="settings-option">Compact: Off</button>
+        <button id="themeToggle" class="settings-option"><span class="label">Theme</span><span class="value">🌙</span></button>
+        <button id="modeToggle" class="settings-option"><span class="label">Mode</span><span class="value">External</span></button>
+        <button id="clockToggle" class="settings-option"><span class="label">Clock</span><span class="value">24h</span></button>
+        <button id="dateToggle" class="settings-option"><span class="label">Date</span><span class="value">On</span></button>
+        <button id="searchToggle" class="settings-option"><span class="label">Search</span><span class="value">On</span></button>
+        <button id="iconToggle" class="settings-option"><span class="label">Icons</span><span class="value">On</span></button>
+        <button id="compactToggle" class="settings-option"><span class="label">Compact</span><span class="value">Off</span></button>
         <button id="clearOrder" class="settings-option">Clear custom order</button>
         <button id="resetAll" class="settings-option">Reset all settings</button>
       </div>
@@ -550,7 +561,7 @@ const modeIndicator = document.getElementById('modeIndicator');
 
 function cycleMode() {
   currentMode = (currentMode + 1) % 3;
-  modeToggle.textContent = `Mode: ${MODES[currentMode]}`;
+  modeToggle.querySelector('.value').textContent = MODES[currentMode];
   modeIndicator.textContent = MODES[currentMode];
   localStorage.setItem('homepage-mode', currentMode);
   setMode(currentMode);
@@ -559,7 +570,7 @@ function cycleMode() {
 }
 
 currentMode = parseInt(localStorage.getItem('homepage-mode')) || 0;
-modeToggle.textContent = `Mode: ${MODES[currentMode]}`;
+modeToggle.querySelector('.value').textContent = MODES[currentMode];
 modeIndicator.textContent = MODES[currentMode];
 setMode(currentMode);
 
@@ -728,7 +739,7 @@ const isLight = savedTheme ? savedTheme === 'light' : !prefersDark;
 
 function setTheme(light) {
   document.documentElement.classList.toggle('light', light);
-  themeToggle.textContent = `Theme: ${light ? '☀️' : '🌙'}`;
+  themeToggle.querySelector('.value').textContent = light ? '☀️' : '🌙';
   localStorage.setItem('homepage-theme', light ? 'light' : 'dark');
 }
 
@@ -745,7 +756,7 @@ const search = document.getElementById('search');
 const clockToggle = document.getElementById('clockToggle');
 
 function setClockFormat(is24) {
-  clockToggle.textContent = `Clock: ${is24 ? '24h' : '12h'}`;
+  clockToggle.querySelector('.value').textContent = is24 ? '24h' : '12h';
   localStorage.setItem('homepage-clock24', is24 ? 'true' : 'false');
   updateTime();
 }
@@ -762,7 +773,7 @@ const dateToggle = document.getElementById('dateToggle');
 
 function setDateVisible(visible) {
   document.getElementById('date').style.display = visible ? 'block' : 'none';
-  dateToggle.textContent = `Date: ${visible ? 'On' : 'Off'}`;
+  dateToggle.querySelector('.value').textContent = visible ? 'On' : 'Off';
   localStorage.setItem('homepage-date', visible ? 'true' : 'false');
 }
 
@@ -778,7 +789,7 @@ const searchToggle = document.getElementById('searchToggle');
 
 function setSearchVisible(visible) {
   search.classList.toggle('hidden', !visible);
-  searchToggle.textContent = `Search: ${visible ? 'On' : 'Off'}`;
+  searchToggle.querySelector('.value').textContent = visible ? 'On' : 'Off';
   localStorage.setItem('homepage-search', visible ? 'true' : 'false');
 }
 
@@ -794,7 +805,7 @@ const iconToggle = document.getElementById('iconToggle');
 
 function setIconsVisible(visible) {
   document.querySelectorAll('.icon').forEach(icon => icon.classList.toggle('hidden', !visible));
-  iconToggle.textContent = `Icons: ${visible ? 'On' : 'Off'}`;
+  iconToggle.querySelector('.value').textContent = visible ? 'On' : 'Off';
   localStorage.setItem('homepage-icons', visible ? 'true' : 'false');
 }
 
@@ -810,7 +821,7 @@ const compactToggle = document.getElementById('compactToggle');
 
 function setCompact(compact) {
   document.body.classList.toggle('compact', compact);
-  compactToggle.textContent = `Compact: ${compact ? 'On' : 'Off'}`;
+  compactToggle.querySelector('.value').textContent = compact ? 'On' : 'Off';
   localStorage.setItem('homepage-compact', compact ? 'true' : 'false');
 }
 
