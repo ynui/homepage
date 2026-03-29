@@ -12,11 +12,14 @@ with open(yaml_file) as f:
     content = f.read()
 
 title = 'Home Page'
+header = ''
 services = []
 
 for line in content.split('\n'):
     if line.startswith('title:'):
         title = line.split('title:')[1].strip()
+    elif line.startswith('header:'):
+        header = line.split('header:')[1].strip()
 
 current = {}
 for line in content.split('\n'):
@@ -62,7 +65,7 @@ with open('src/style.css') as f:
 with open('src/script.js') as f:
     js = f.read()
 
-html = template.replace('{{title}}', title).replace('{{services}}', services_html).replace('{{css}}', css).replace('{{js}}', js)
+html = template.replace('{{title}}', title).replace('{{header}}', header).replace('{{services}}', services_html).replace('{{css}}', css).replace('{{js}}', js)
 
 with open(output_file, 'w') as f:
     f.write(html)
