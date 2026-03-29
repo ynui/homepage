@@ -341,6 +341,7 @@ a:hover .icon {
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  cursor: pointer;
 }
 
 .hints-footer .separator {
