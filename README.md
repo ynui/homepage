@@ -1,17 +1,14 @@
 # Homepage
 
-A minimal, clean homepage.
+A minimal, keyboard-friendly homepage dashboard.
 
 ## Features
 
 - Clean, dark-themed UI
 - External/Local toggle for different network environments
-- Search/filter services
-- Type-to-jump (just start typing)
-- Drag to reorder services (saved in browser)
-- Long-press (500ms) to copy service URL
-- Auto-detect service type from YAML
-- Mobile-friendly with scroll detection
+- Search/filter services with type-to-jump
+- Drag to reorder services (persists in browser)
+- Long-press (500ms) to copy service URL on mobile
 
 ## Quick Start
 
@@ -21,12 +18,6 @@ vim services.yml
 
 # Build
 python3 build.py
-
-# Or build a specific config
-python3 build.py --example    # uses services.example.yml -> example.html
-
-# Serve locally
-python3 -m http.server 8080
 ```
 
 ## Configuration
@@ -34,42 +25,48 @@ python3 -m http.server 8080
 Edit `services.yml`:
 
 ```yaml
-title: My Homepage     # Page title (optional, default: Home Page)
+title: My Homepage
 
 services:
-  - name: service
-    url: https://service.example.com       # external URL
-    local: http://localhost:8080           # local URL (optional)
-    icon: 🛠                               # emoji icon
+  - name: ServiceName
+    url: https://service.example.com    # external URL
+    local: http://localhost:8080        # local URL (optional)
+    icon: 🛠
 ```
 
 ### Service Types
 
-- **Both url + local**: Shows in both modes, switches URL based on toggle
+- **url + local**: Shows in both modes, switches based on toggle
 - **url only**: Shows only in external mode
 - **local only**: Shows only in local mode
 
-### Interaction
+### Keyboard Shortcuts
 
-- **Click/Tap**: Navigate to service
-- **Long Press** (500ms): Copy URL to clipboard
-- **Scroll**: Normal page scrolling (won't trigger copy)
-- **Type**: Start typing to filter and jump to first result
+- **Type**: Filter services and jump to first result
 - **Arrow Keys**: Navigate filtered results
 - **Enter**: Open selected service
 - **Esc**: Clear search
 
+### Mobile
+
+- **Tap**: Navigate to service
+- **Long Press** (500ms): Copy URL to clipboard
+- **Drag**: Reorder services
+
 ## Deployment
 
-1. Run `python3 build.py`
-2. Upload `index.html` to your web server (nginx, apache, etc.)
+```bash
+python3 build.py
+# Upload index.html to your web server
+```
 
 ## Files
 
 ```
 .
-├── services.yml    # Service definitions
-├── build.py        # Build script
-├── index.html      # Generated output
-└── README.md       # This file
+├── services.yml         # Service definitions
+├── services.example.yml # Example config
+├── build.py             # Build script
+├── index.html           # Generated output (do not edit)
+└── README.md
 ```
