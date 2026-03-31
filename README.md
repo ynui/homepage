@@ -19,6 +19,9 @@ vim services.yml
 
 # Build
 python3 build.py
+
+# Generate example
+python3 build.py --example
 ```
 
 ## Configuration
@@ -31,8 +34,8 @@ header: Dashboard       # Header display (optional, defaults to title)
 
 services:
   - name: ServiceName
-    url: https://service.example.com    # external URL (required)
-    local: http://localhost:8080        # local URL (optional)
+    url: https://service.example.com    # external URL
+    local: http://localhost:8080        # local URL
     icon: 🛠
 ```
 
@@ -76,6 +79,9 @@ Click the ⚙ button or press `,` to access:
 ```bash
 python3 build.py
 # Upload index.html to your web server
+
+# For example config
+python3 build.py --example
 ```
 
 ## Files
@@ -83,12 +89,13 @@ python3 build.py
 ```
 .
 ├── src/
-│   ├── template.html   # HTML template
-│   ├── style.css       # Styles
-│   └── script.js       # JavaScript
+│   ├── template.html    # HTML template
+│   ├── style.css        # Styles
+│   └── script.js        # JavaScript
 ├── services.yml         # Service definitions
 ├── services.example.yml # Example config
-├── build.py            # Build script
-├── index.html          # Generated output (do not edit)
+├── build.py             # Build script
+├── index.html           # Generated output (do not edit)
+├── AGENTS.md            # Agent guidelines
 └── README.md
 ```

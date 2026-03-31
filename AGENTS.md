@@ -98,14 +98,14 @@ services:
 
 ```
 /homepage
-├── index.html          # Generated (do not edit)
-├── example.html        # Generated example
-├── build.py            # Build script
+├── index.html            # Generated (do not edit)
+├── example.html          # Generated example
+├── build.py              # Build script
 ├── src/
-│   ├── template.html   # HTML template
-│   ├── style.css       # Styles
-│   └── script.js       # JavaScript
-├── services.yml        # Service configuration
+│   ├── template.html     # HTML template
+│   ├── style.css         # Styles
+│   └── script.js         # JavaScript
+├── services.yml          # Service configuration
 ├── services.example.yml
 └── AGENTS.md
 ```
@@ -137,8 +137,7 @@ services:
 2. Edit `script.js` for JavaScript changes
 3. Edit `template.html` for HTML structure changes
 4. Run `python3 build.py` to regenerate HTML
-2. Run `python3 build.py`
-3. Test in browser
+5. Test in browser
 
 ## Features
 
