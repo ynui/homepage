@@ -25,6 +25,8 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: '3.x'
+    - name: Install dependencies
+      run: pip install PyYAML
     - name: Build example
       run: python3 build.py --example
     - name: Commit example.html
