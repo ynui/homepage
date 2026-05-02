@@ -107,7 +107,7 @@ services:
   - `url` (required) - Service URL
   - `icon` - Emoji or text icon
   - `groups` (required) - List of group IDs the service belongs to
-  - Services with no groups default to "all" only
+  - Services with no groups (or invalid group IDs) default to a "No Group" category
 
 ## File Structure
 
@@ -172,6 +172,7 @@ services:
 ### Search & Keyboard Navigation
 - Type any key to focus search and filter
 - Arrow keys to navigate filtered results
+- Page auto-scrolls to keep the selected service in view
 - Enter to open selected service
 - Escape to clear search
 - `/` to cycle group
@@ -189,8 +190,15 @@ services:
 - Order persists in localStorage under key `homepage-order`
 
 ### Long-Press to Copy (Mobile)
-- Long-press (500ms) copies URL to clipboard
+- Long-press (500ms) provides haptic feedback (vibration)
+- Shows "Release to copy" toast during hold
+- Copies URL to clipboard on release
 - Shows toast confirmation "Link copied!"
+- Requires HTTPS context (notified if unavailable)
+
+### Grouped View (All Mode)
+- In "All" group mode, services are categorized under group headers
+- Headers are dynamically hidden if no services match the current search
 
 ### Settings Panel
 - Theme: Toggle light/dark mode (stored in `homepage-theme`)
@@ -210,11 +218,11 @@ services:
 ### Core Functions
 - `updateTime()` - Updates clock and date display
 - `saveOrder()` / `loadOrder()` - localStorage persistence for order
-- `setGroup(groupId)` - Filter services by group
+- `setGroup(groupId)` - Filter services by group; restores grouped order in 'all' mode
 - `showToast(msg)` - Show toast notification
-- `copyLink(url)` - Copy URL to clipboard
-- `filterServices(query)` - Filter services by name
-- `updateSelection(visibleLinks)` - Highlight selected service
+- `copyLink(url)` - Copy URL to clipboard with safety checks
+- `filterServices(query)` - Filter services by name and toggle group headers
+- `updateSelection(visibleLinks)` - Highlight selected service and scroll into view
 - `openSelected()` - Navigate to selected service
 
 ### Settings Functions

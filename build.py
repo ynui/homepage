@@ -16,38 +16,50 @@ with open(yaml_file) as f:
 title = data.get('title', 'Home Page')
 header = data.get('header', title)
 
-# Parse groups (explicit + implicit 'all')
+# Parse groups
 groups = data.get('groups', [])
 groups_list = [{'id': g['id'], 'name': g['name'], 'icon': g.get('icon', '')} for g in groups]
+group_ids = {g['id'] for g in groups_list}
+
+# Parse services
+services_list = data.get('services', [])
+services = []
+has_nogroup = False
+for svc in services_list:
+    svc_groups = svc.get('groups', [])
+    valid_groups = [g for g in svc_groups if g in group_ids]
+    if not valid_groups:
+        valid_groups = ['nogroup']
+        has_nogroup = True
+    svc['groups'] = valid_groups
+    services.append(svc)
+
+if has_nogroup:
+    groups_list.append({'id': 'nogroup', 'name': 'No Group', 'icon': ''})
+
 # Add implicit 'all' group
 groups_list.append({'id': 'all', 'name': 'All', 'icon': ''})
 
-# Build group lookup
-group_ids = {g['id'] for g in groups_list}
-
-# Parse services (list format)
-services_list = data.get('services', [])
-services = []
-for svc in services_list:
-    # Default: belongs to 'all' if no groups specified
-    svc_groups = svc.get('groups', ['all'])
-    svc['groups'] = [g for g in svc_groups if g in group_ids or g == 'all']
-    if not svc['groups']:
-        svc['groups'] = ['all']
-    services.append(svc)
-
 # Generate services HTML
 services_html = ''
-for s in services:
-    url = s.get('url', '')
-    groups_attr = ' '.join(s['groups'])
-    icon = s.get('icon', '⚙')
-    # Store default URL for the service
-    services_html += f'''      <a href="{url}" data-name="{s['name'].lower()}" data-groups="{groups_attr}" data-default-url="{url}">
+rendered_names = set()
+
+for g in groups_list:
+    if g['id'] == 'all':
+        continue
+    
+    group_services = [s for s in services if g['id'] in s['groups'] and s['name'] not in rendered_names]
+    if group_services:
+        services_html += f'      <div class="group-header" data-group="{g["id"]}">{g["name"]}</div>\n'
+        for s in group_services:
+            url = s.get('url', '')
+            groups_attr = ' '.join(s['groups'])
+            icon = s.get('icon', '⚙')
+            services_html += f'''      <a href="{url}" data-name="{s['name'].lower()}" data-groups="{groups_attr}" data-default-url="{url}">
         <span class="icon">{icon}</span>
         {s['name']}
-      </a>
-'''
+      </a>\n'''
+            rendered_names.add(s['name'])
 
 # JSON for JS
 groups_json = json.dumps(groups_list)

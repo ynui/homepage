@@ -17,6 +17,7 @@ setInterval(updateTime, 1000);
 const groupToggle = document.getElementById('groupToggle');
 const grid = document.querySelector('.grid');
 const links = [...document.querySelectorAll('.grid a')];
+const initialElements = [...grid.children];
 
 const GROUPS = window.GROUPS || [{id: 'all', name: 'All'}];
 let currentGroup = GROUPS[0].id;
@@ -66,9 +67,17 @@ links.forEach(link => {
 });
 
 function setGroup(groupId) {
+  const isAll = groupId === 'all';
+  if (isAll) {
+    initialElements.forEach(el => grid.appendChild(el));
+  } else {
+    loadOrder();
+  }
+  document.querySelectorAll('.group-header').forEach(h => h.classList.toggle('hidden', !isAll));
+
   links.forEach(link => {
     const groups = link.dataset.groups.split(' ');
-    if (groupId === 'all') {
+    if (isAll) {
       link.classList.remove('hidden');
       link.href = link.dataset.defaultUrl || link.href;
     } else if (groups.includes(groupId)) {
@@ -164,8 +173,14 @@ function showToast(msg) {
 }
 
 function copyLink(url) {
+  if (!navigator.clipboard) {
+    showToast('Use HTTPS to copy links');
+    return;
+  }
   navigator.clipboard.writeText(url).then(() => {
     showToast('Link copied!');
+  }).catch(() => {
+    showToast('Copy failed');
   });
 }
 
@@ -175,6 +190,7 @@ links.forEach(link => {
   let startX, startY;
 
   const startPress = (e) => {
+    if (e.type === 'mousedown' && e.button !== 0) return;
     longPressed = false;
     touchMoved = false;
     if (e.type === 'touchstart') {
@@ -184,7 +200,8 @@ links.forEach(link => {
     longPressTimer = setTimeout(() => {
       if (!touchMoved) {
         longPressed = true;
-        copyLink(link.href);
+        if (navigator.vibrate) navigator.vibrate(50);
+        showToast('Release to copy');
       }
     }, 500);
   };
@@ -197,19 +214,25 @@ links.forEach(link => {
         touchMoved = true;
         clearTimeout(longPressTimer);
       }
+    } else if (e.type === 'mousemove') {
+      // No movement threshold for mouse yet, could add if needed
     }
   };
 
-  const endPress = () => {
-    touchMoved = false;
+  const endPress = (e) => {
     clearTimeout(longPressTimer);
+    if (longPressed) {
+      copyLink(link.href);
+      // We set a flag to prevent the upcoming click
+      setTimeout(() => { longPressed = false; }, 10);
+    }
   };
 
   const handleClick = (e) => {
     if (longPressed) {
       e.preventDefault();
       e.stopPropagation();
-      longPressed = false;
+      // longPressed is reset in endPress's timeout
     }
   };
 
@@ -420,6 +443,22 @@ function filterServices(query) {
     link.classList.toggle('hidden', !isMatch);
     if (isMatch) visibleLinks.push(link);
   });
+
+  if (isAll) {
+    document.querySelectorAll('.group-header').forEach(header => {
+      let next = header.nextElementSibling;
+      let hasVisible = false;
+      while (next && !next.classList.contains('group-header')) {
+        if (!next.classList.contains('hidden')) {
+          hasVisible = true;
+          break;
+        }
+        next = next.nextElementSibling;
+      }
+      header.classList.toggle('hidden', !hasVisible);
+    });
+  }
+
   selectedIndex = visibleLinks.length > 0 ? 0 : -1;
   updateSelection(visibleLinks);
 }
@@ -427,7 +466,9 @@ function filterServices(query) {
 function updateSelection(visibleLinks) {
   visibleLinks.forEach((link, i) => link.classList.remove('selected'));
   if (selectedIndex >= 0 && visibleLinks[selectedIndex]) {
-    visibleLinks[selectedIndex].classList.add('selected');
+    const selected = visibleLinks[selectedIndex];
+    selected.classList.add('selected');
+    selected.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
 

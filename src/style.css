@@ -199,6 +199,22 @@ a.hidden {
   justify-content: center;
 }
 
+.group-header {
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #3d3d45;
+  margin: 2rem 0 1rem;
+  text-align: center;
+  display: block;
+}
+
+.group-header.hidden {
+  display: none;
+}
+
 .grid a {
   width: 140px;
   flex-shrink: 0;
