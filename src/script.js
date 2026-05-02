@@ -14,12 +14,12 @@ function updateTime() {
 updateTime();
 setInterval(updateTime, 1000);
 
-const modeToggle = document.getElementById('modeToggle');
+const groupToggle = document.getElementById('groupToggle');
 const grid = document.querySelector('.grid');
 const links = [...document.querySelectorAll('.grid a')];
 
-const MODES = ['External', 'Local', 'All'];
-let currentMode = 0;
+const GROUPS = ['External', 'Local', 'All'];
+let currentGroup = 0;
 
 let draggedItem = null;
 
@@ -65,9 +65,9 @@ links.forEach(link => {
   });
 });
 
-function setMode(mode) {
-  const isLocal = mode === 1;
-  const isAll = mode === 2;
+function setGroup(group) {
+  const isLocal = group === 1;
+  const isAll = group === 2;
   links.forEach(link => {
     const type = link.dataset.type;
     if (type === 'both') {
@@ -83,24 +83,52 @@ function setMode(mode) {
   });
 }
 
-const modeIndicator = document.getElementById('modeIndicator');
+const groupIndicator = document.getElementById('groupIndicator');
+const groupValue = document.getElementById('groupValue');
+const groupSelector = document.getElementById('groupSelector');
+const groupOptions = [...document.querySelectorAll('.group-option')];
 
-function cycleMode() {
-  currentMode = (currentMode + 1) % 3;
-  modeToggle.querySelector('.value').textContent = MODES[currentMode];
-  modeIndicator.textContent = MODES[currentMode];
-  localStorage.setItem('homepage-mode', currentMode);
-  setMode(currentMode);
+function cycleGroup() {
+  currentGroup = (currentGroup + 1) % 3;
+  groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
+  groupValue.textContent = GROUPS[currentGroup];
+  localStorage.setItem('homepage-group', currentGroup);
+  setGroup(currentGroup);
   filterServices(search.value);
-  showToast(`Mode: ${MODES[currentMode]}`);
+  showToast(`Group: ${GROUPS[currentGroup]}`);
 }
 
-currentMode = parseInt(localStorage.getItem('homepage-mode')) || 0;
-modeToggle.querySelector('.value').textContent = MODES[currentMode];
-modeIndicator.textContent = MODES[currentMode];
-setMode(currentMode);
+currentGroup = parseInt(localStorage.getItem('homepage-group')) || 0;
+groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
+groupValue.textContent = GROUPS[currentGroup];
+setGroup(currentGroup);
 
-modeToggle.addEventListener('click', cycleMode);
+groupToggle.addEventListener('click', cycleGroup);
+
+groupIndicator.addEventListener('click', (e) => {
+  e.stopPropagation();
+  groupSelector.classList.toggle('active');
+});
+
+groupOptions.forEach(opt => {
+  opt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentGroup = parseInt(opt.dataset.group);
+    groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
+    groupValue.textContent = GROUPS[currentGroup];
+    localStorage.setItem('homepage-group', currentGroup);
+    setGroup(currentGroup);
+    filterServices(search.value);
+    groupSelector.classList.remove('active');
+    showToast(`Group: ${GROUPS[currentGroup]}`);
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (!groupIndicator.contains(e.target)) {
+    groupSelector.classList.remove('active');
+  }
+});
 
 const toast = document.getElementById('toast');
 let longPressTimer;
@@ -190,15 +218,10 @@ settingsBtn.addEventListener('click', (e) => {
   }
 });
 
-const hintMode = document.getElementById('hintMode');
 const hintSettings = document.getElementById('hintSettings');
 const hintHelp = document.getElementById('hintHelp');
 const hintsOverlay = document.getElementById('hints');
 
-hintMode.addEventListener('click', (e) => {
-  e.stopPropagation();
-  cycleMode();
-});
 hintSettings.addEventListener('click', (e) => {
   e.stopPropagation();
   settingsDropdown.classList.toggle('show');
@@ -363,8 +386,8 @@ let selectedIndex = -1;
 
 function filterServices(query) {
   const q = query.toLowerCase();
-  const isLocal = currentMode === 1;
-  const isAll = currentMode === 2;
+  const isLocal = currentGroup === 1;
+  const isAll = currentGroup === 2;
   let visibleLinks = [];
   links.forEach(link => {
     const type = link.dataset.type;
@@ -463,7 +486,7 @@ document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') {
     if (e.key === '/') {
       e.preventDefault();
-      cycleMode();
+      cycleGroup();
       return;
     }
     if (e.key === ',') {
@@ -532,7 +555,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === '/') {
     e.preventDefault();
-    cycleMode();
+    cycleGroup();
     return;
   }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {

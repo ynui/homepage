@@ -111,12 +111,10 @@ h1 {
 }
 
 .settings {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
 }
 
 .settings-btn {
@@ -140,7 +138,7 @@ button:focus, .settings-dropdown:focus {
 
 .settings-dropdown {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   right: 0;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -336,32 +334,40 @@ a:hover .icon {
   color: var(--accent);
 }
 
-.hints-footer {
+.bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   background: var(--bg);
   border-top: 1px solid var(--card-border);
+  z-index: 100;
+}
+
+.group-indicator {
+  justify-self: start;
+}
+
+.hints-footer {
+  justify-self: center;
+}
+
+.settings {
+  justify-self: end;
+}
+
+.hints-footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 body {
-  padding-bottom: 4rem;
-}
-
-.hints-footer .mode-indicator {
-  font-size: 0.65rem;
-  color: var(--text);
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  min-width: 55px;
-  text-align: center;
+  padding-bottom: 3.5rem;
 }
 
 .hints-footer .separator {
@@ -383,4 +389,59 @@ body {
   font-family: monospace;
   color: var(--accent);
   margin-right: 0.25rem;
+}
+
+.group-indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.65rem;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.group-indicator:hover {
+  opacity: 0.8;
+}
+
+.group-selector {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 0.25rem;
+  min-width: 100px;
+  display: none;
+  z-index: 110;
+}
+
+.group-selector.active {
+  display: block;
+}
+
+.group-option {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 0.375rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.group-option:hover {
+  background: var(--card-border);
+  color: var(--text-hover);
 }

@@ -119,12 +119,10 @@ h1 {
 }
 
 .settings {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
 }
 
 .settings-btn {
@@ -148,7 +146,7 @@ button:focus, .settings-dropdown:focus {
 
 .settings-dropdown {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   right: 0;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -344,32 +342,40 @@ a:hover .icon {
   color: var(--accent);
 }
 
-.hints-footer {
+.bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   background: var(--bg);
   border-top: 1px solid var(--card-border);
+  z-index: 100;
+}
+
+.group-indicator {
+  justify-self: start;
+}
+
+.hints-footer {
+  justify-self: center;
+}
+
+.settings {
+  justify-self: end;
+}
+
+.hints-footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 body {
-  padding-bottom: 4rem;
-}
-
-.hints-footer .mode-indicator {
-  font-size: 0.65rem;
-  color: var(--text);
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  min-width: 55px;
-  text-align: center;
+  padding-bottom: 3.5rem;
 }
 
 .hints-footer .separator {
@@ -393,24 +399,65 @@ body {
   margin-right: 0.25rem;
 }
 
+.group-indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.65rem;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.group-indicator:hover {
+  opacity: 0.8;
+}
+
+.group-selector {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 0.25rem;
+  min-width: 100px;
+  display: none;
+  z-index: 110;
+}
+
+.group-selector.active {
+  display: block;
+}
+
+.group-option {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 0.375rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.group-option:hover {
+  background: var(--card-border);
+  color: var(--text-hover);
+}
+
   </style>
 </head>
 <body>
   <main>
-    <div class="settings">
-      <button id="settingsBtn" class="settings-btn">⚙</button>
-      <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
-        <button id="themeToggle" class="settings-option"><span class="label">Theme</span><span class="value">🌙</span></button>
-        <button id="modeToggle" class="settings-option"><span class="label">Mode</span><span class="value">External</span></button>
-        <button id="clockToggle" class="settings-option"><span class="label">Clock</span><span class="value">24h</span></button>
-        <button id="dateToggle" class="settings-option"><span class="label">Date</span><span class="value">On</span></button>
-        <button id="searchToggle" class="settings-option"><span class="label">Search</span><span class="value">On</span></button>
-        <button id="iconToggle" class="settings-option"><span class="label">Icons</span><span class="value">On</span></button>
-        <button id="compactToggle" class="settings-option"><span class="label">Compact</span><span class="value">Off</span></button>
-        <button id="clearOrder" class="settings-option">Clear custom order</button>
-        <button id="resetAll" class="settings-option">Reset all settings</button>
-      </div>
-    </div>
     <header>
       <h1 id="headerTitle">Dashboard</h1>
       <div class="time" id="time"></div>
@@ -452,20 +499,42 @@ body {
       </a>
 
     </div>
-    <footer class="hints-footer">
-      <span class="hint" id="hintMode"><span class="key">/</span> mode</span>
-      <span class="hint" id="hintSettings"><span class="key">,</span> settings</span>
-      <span class="hint" id="hintHelp"><span class="key">?</span> help</span>
-      <span class="separator">|</span>
-      <span class="mode-indicator" id="modeIndicator">External</span>
-    </footer>
+    <div class="bottom-bar">
+      <div class="group-indicator" id="groupIndicator">
+        <span class="group-label">Group:</span>
+        <span class="group-value" id="groupValue">External</span>
+        <div class="group-selector" id="groupSelector">
+          <button class="group-option" data-group="0">External</button>
+          <button class="group-option" data-group="1">Local</button>
+          <button class="group-option" data-group="2">All</button>
+        </div>
+      </div>
+      <footer class="hints-footer">
+        <span class="hint" id="hintSettings"><span class="key">,</span> settings</span>
+        <span class="hint" id="hintHelp"><span class="key">?</span> help</span>
+      </footer>
+      <div class="settings">
+        <button id="settingsBtn" class="settings-btn">⚙</button>
+        <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
+          <button id="themeToggle" class="settings-option"><span class="label">Theme</span><span class="value">🌙</span></button>
+          <button id="groupToggle" class="settings-option"><span class="label">Group</span><span class="value">External</span></button>
+          <button id="clockToggle" class="settings-option"><span class="label">Clock</span><span class="value">24h</span></button>
+          <button id="dateToggle" class="settings-option"><span class="label">Date</span><span class="value">On</span></button>
+          <button id="searchToggle" class="settings-option"><span class="label">Search</span><span class="value">On</span></button>
+          <button id="iconToggle" class="settings-option"><span class="label">Icons</span><span class="value">On</span></button>
+          <button id="compactToggle" class="settings-option"><span class="label">Compact</span><span class="value">Off</span></button>
+          <button id="clearOrder" class="settings-option">Clear custom order</button>
+          <button id="resetAll" class="settings-option">Reset all settings</button>
+        </div>
+      </div>
+    </div>
   </main>
   <div class="toast" id="toast">Copied!</div>
   <div class="hints" id="hints">
     <h2>Keyboard Shortcuts</h2>
     <div class="hint-row"><span class="key">↑↓←→</span><span>Navigate apps</span></div>
     <div class="hint-row"><span class="key">Enter</span><span>Open selected</span></div>
-    <div class="hint-row"><span class="key">/</span><span>Cycle mode</span></div>
+    <div class="hint-row"><span class="key">/</span><span>Cycle group</span></div>
     <div class="hint-row"><span class="key">,</span><span>Open settings</span></div>
     <div class="hint-row"><span class="key">Type</span><span>Search apps</span></div>
     <div class="hint-row"><span class="key">Esc</span><span>Clear / Close</span></div>
@@ -488,12 +557,12 @@ function updateTime() {
 updateTime();
 setInterval(updateTime, 1000);
 
-const modeToggle = document.getElementById('modeToggle');
+const groupToggle = document.getElementById('groupToggle');
 const grid = document.querySelector('.grid');
 const links = [...document.querySelectorAll('.grid a')];
 
-const MODES = ['External', 'Local', 'All'];
-let currentMode = 0;
+const GROUPS = ['External', 'Local', 'All'];
+let currentGroup = 0;
 
 let draggedItem = null;
 
@@ -539,9 +608,9 @@ links.forEach(link => {
   });
 });
 
-function setMode(mode) {
-  const isLocal = mode === 1;
-  const isAll = mode === 2;
+function setGroup(group) {
+  const isLocal = group === 1;
+  const isAll = group === 2;
   links.forEach(link => {
     const type = link.dataset.type;
     if (type === 'both') {
@@ -557,24 +626,52 @@ function setMode(mode) {
   });
 }
 
-const modeIndicator = document.getElementById('modeIndicator');
+const groupIndicator = document.getElementById('groupIndicator');
+const groupValue = document.getElementById('groupValue');
+const groupSelector = document.getElementById('groupSelector');
+const groupOptions = [...document.querySelectorAll('.group-option')];
 
-function cycleMode() {
-  currentMode = (currentMode + 1) % 3;
-  modeToggle.querySelector('.value').textContent = MODES[currentMode];
-  modeIndicator.textContent = MODES[currentMode];
-  localStorage.setItem('homepage-mode', currentMode);
-  setMode(currentMode);
+function cycleGroup() {
+  currentGroup = (currentGroup + 1) % 3;
+  groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
+  groupValue.textContent = GROUPS[currentGroup];
+  localStorage.setItem('homepage-group', currentGroup);
+  setGroup(currentGroup);
   filterServices(search.value);
-  showToast(`Mode: ${MODES[currentMode]}`);
+  showToast(`Group: ${GROUPS[currentGroup]}`);
 }
 
-currentMode = parseInt(localStorage.getItem('homepage-mode')) || 0;
-modeToggle.querySelector('.value').textContent = MODES[currentMode];
-modeIndicator.textContent = MODES[currentMode];
-setMode(currentMode);
+currentGroup = parseInt(localStorage.getItem('homepage-group')) || 0;
+groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
+groupValue.textContent = GROUPS[currentGroup];
+setGroup(currentGroup);
 
-modeToggle.addEventListener('click', cycleMode);
+groupToggle.addEventListener('click', cycleGroup);
+
+groupIndicator.addEventListener('click', (e) => {
+  e.stopPropagation();
+  groupSelector.classList.toggle('active');
+});
+
+groupOptions.forEach(opt => {
+  opt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentGroup = parseInt(opt.dataset.group);
+    groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
+    groupValue.textContent = GROUPS[currentGroup];
+    localStorage.setItem('homepage-group', currentGroup);
+    setGroup(currentGroup);
+    filterServices(search.value);
+    groupSelector.classList.remove('active');
+    showToast(`Group: ${GROUPS[currentGroup]}`);
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (!groupIndicator.contains(e.target)) {
+    groupSelector.classList.remove('active');
+  }
+});
 
 const toast = document.getElementById('toast');
 let longPressTimer;
@@ -664,15 +761,10 @@ settingsBtn.addEventListener('click', (e) => {
   }
 });
 
-const hintMode = document.getElementById('hintMode');
 const hintSettings = document.getElementById('hintSettings');
 const hintHelp = document.getElementById('hintHelp');
 const hintsOverlay = document.getElementById('hints');
 
-hintMode.addEventListener('click', (e) => {
-  e.stopPropagation();
-  cycleMode();
-});
 hintSettings.addEventListener('click', (e) => {
   e.stopPropagation();
   settingsDropdown.classList.toggle('show');
@@ -837,8 +929,8 @@ let selectedIndex = -1;
 
 function filterServices(query) {
   const q = query.toLowerCase();
-  const isLocal = currentMode === 1;
-  const isAll = currentMode === 2;
+  const isLocal = currentGroup === 1;
+  const isAll = currentGroup === 2;
   let visibleLinks = [];
   links.forEach(link => {
     const type = link.dataset.type;
@@ -937,7 +1029,7 @@ document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') {
     if (e.key === '/') {
       e.preventDefault();
-      cycleMode();
+      cycleGroup();
       return;
     }
     if (e.key === ',') {
@@ -1006,7 +1098,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === '/') {
     e.preventDefault();
-    cycleMode();
+    cycleGroup();
     return;
   }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {

@@ -11,20 +11,6 @@
 </head>
 <body>
   <main>
-    <div class="settings">
-      <button id="settingsBtn" class="settings-btn">⚙</button>
-      <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
-        <button id="themeToggle" class="settings-option"><span class="label">Theme</span><span class="value">🌙</span></button>
-        <button id="modeToggle" class="settings-option"><span class="label">Mode</span><span class="value">External</span></button>
-        <button id="clockToggle" class="settings-option"><span class="label">Clock</span><span class="value">24h</span></button>
-        <button id="dateToggle" class="settings-option"><span class="label">Date</span><span class="value">On</span></button>
-        <button id="searchToggle" class="settings-option"><span class="label">Search</span><span class="value">On</span></button>
-        <button id="iconToggle" class="settings-option"><span class="label">Icons</span><span class="value">On</span></button>
-        <button id="compactToggle" class="settings-option"><span class="label">Compact</span><span class="value">Off</span></button>
-        <button id="clearOrder" class="settings-option">Clear custom order</button>
-        <button id="resetAll" class="settings-option">Reset all settings</button>
-      </div>
-    </div>
     <header>
       <h1 id="headerTitle">{{header}}</h1>
       <div class="time" id="time"></div>
@@ -34,20 +20,42 @@
     <div class="grid">
 {{services}}
     </div>
-    <footer class="hints-footer">
-      <span class="hint" id="hintMode"><span class="key">/</span> mode</span>
-      <span class="hint" id="hintSettings"><span class="key">,</span> settings</span>
-      <span class="hint" id="hintHelp"><span class="key">?</span> help</span>
-      <span class="separator">|</span>
-      <span class="mode-indicator" id="modeIndicator">External</span>
-    </footer>
+    <div class="bottom-bar">
+      <div class="group-indicator" id="groupIndicator">
+        <span class="group-label">Group:</span>
+        <span class="group-value" id="groupValue">External</span>
+        <div class="group-selector" id="groupSelector">
+          <button class="group-option" data-group="0">External</button>
+          <button class="group-option" data-group="1">Local</button>
+          <button class="group-option" data-group="2">All</button>
+        </div>
+      </div>
+      <footer class="hints-footer">
+        <span class="hint" id="hintSettings"><span class="key">,</span> settings</span>
+        <span class="hint" id="hintHelp"><span class="key">?</span> help</span>
+      </footer>
+      <div class="settings">
+        <button id="settingsBtn" class="settings-btn">⚙</button>
+        <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
+          <button id="themeToggle" class="settings-option"><span class="label">Theme</span><span class="value">🌙</span></button>
+          <button id="groupToggle" class="settings-option"><span class="label">Group</span><span class="value">External</span></button>
+          <button id="clockToggle" class="settings-option"><span class="label">Clock</span><span class="value">24h</span></button>
+          <button id="dateToggle" class="settings-option"><span class="label">Date</span><span class="value">On</span></button>
+          <button id="searchToggle" class="settings-option"><span class="label">Search</span><span class="value">On</span></button>
+          <button id="iconToggle" class="settings-option"><span class="label">Icons</span><span class="value">On</span></button>
+          <button id="compactToggle" class="settings-option"><span class="label">Compact</span><span class="value">Off</span></button>
+          <button id="clearOrder" class="settings-option">Clear custom order</button>
+          <button id="resetAll" class="settings-option">Reset all settings</button>
+        </div>
+      </div>
+    </div>
   </main>
   <div class="toast" id="toast">Copied!</div>
   <div class="hints" id="hints">
     <h2>Keyboard Shortcuts</h2>
     <div class="hint-row"><span class="key">↑↓←→</span><span>Navigate apps</span></div>
     <div class="hint-row"><span class="key">Enter</span><span>Open selected</span></div>
-    <div class="hint-row"><span class="key">/</span><span>Cycle mode</span></div>
+    <div class="hint-row"><span class="key">/</span><span>Cycle group</span></div>
     <div class="hint-row"><span class="key">,</span><span>Open settings</span></div>
     <div class="hint-row"><span class="key">Type</span><span>Search apps</span></div>
     <div class="hint-row"><span class="key">Esc</span><span>Clear / Close</span></div>
