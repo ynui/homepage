@@ -7,6 +7,7 @@ on:
       - 'build.py'
       - 'src/**'
       - 'services.example.yml'
+      - '.github/workflows/deploy-example.yml'
 
 permissions:
   contents: write
