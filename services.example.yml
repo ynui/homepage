@@ -38,3 +38,8 @@ services:
     url: https://echo.example.com
     icon: 📟
     groups: [ monitoring ]
+
+  - name: Service Foxtrot
+    url: https://foxtrot.example.com
+    icon: 🖥
+    # groups: [] # no groups

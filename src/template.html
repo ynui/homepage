@@ -28,10 +28,7 @@
           <!-- Dynamic options rendered by JS from window.GROUPS -->
         </div>
       </div>
-      <footer class="hints-footer">
-        <span class="hint" id="hintSettings"><span class="key">,</span> settings</span>
-        <span class="hint" id="hintHelp"><span class="key">?</span> help</span>
-      </footer>
+      <div class="spacer"></div>
       <div class="settings">
         <button id="settingsBtn" class="settings-btn">⚙</button>
         <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
@@ -42,6 +39,7 @@
           <button id="searchToggle" class="settings-option"><span class="label">Search</span><span class="value">On</span></button>
           <button id="iconToggle" class="settings-option"><span class="label">Icons</span><span class="value">On</span></button>
           <button id="compactToggle" class="settings-option"><span class="label">Compact</span><span class="value">Off</span></button>
+          <button id="showHelp" class="settings-option"><span class="label">Keyboard Help</span><span class="value">?</span></button>
           <button id="clearOrder" class="settings-option">Clear custom order</button>
           <button id="resetAll" class="settings-option">Reset all settings</button>
         </div>
@@ -50,6 +48,7 @@
   </main>
   <div class="toast" id="toast">Copied!</div>
   <div class="hints" id="hints">
+    <button class="hints-close" id="hintsClose">&times;</button>
     <h2>Keyboard Shortcuts</h2>
     <div class="hint-row"><span class="key">↑↓←→</span><span>Navigate apps</span></div>
     <div class="hint-row"><span class="key">Enter</span><span>Open selected</span></div>

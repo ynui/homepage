@@ -265,22 +265,24 @@ settingsBtn.addEventListener('click', (e) => {
   }
 });
 
-const hintSettings = document.getElementById('hintSettings');
-const hintHelp = document.getElementById('hintHelp');
+const showHelp = document.getElementById('showHelp');
 const hintsOverlay = document.getElementById('hints');
+const hintsClose = document.getElementById('hintsClose');
 
-hintSettings.addEventListener('click', (e) => {
+showHelp.addEventListener('click', (e) => {
   e.stopPropagation();
-  settingsDropdown.classList.toggle('show');
-  if (settingsDropdown.classList.contains('show')) {
-    settingsFocusIndex = 0;
-    settingsOptions.forEach((opt, i) => opt.classList.toggle('focused', i === 0));
-    settingsDropdown.focus();
-  }
+  hintsOverlay.classList.add('show');
+  settingsDropdown.classList.remove('show');
 });
-hintHelp.addEventListener('click', (e) => {
-  e.stopPropagation();
-  hintsOverlay.classList.toggle('show');
+
+hintsClose.addEventListener('click', () => {
+  hintsOverlay.classList.remove('show');
+});
+
+document.addEventListener('click', (e) => {
+  if (hintsOverlay.classList.contains('show') && !hintsOverlay.contains(e.target)) {
+    hintsOverlay.classList.remove('show');
+  }
 });
 
 let settingsFocusIndex = -1;
@@ -459,7 +461,7 @@ function filterServices(query) {
     });
   }
 
-  selectedIndex = visibleLinks.length > 0 ? 0 : -1;
+  selectedIndex = q && visibleLinks.length > 0 ? 0 : -1;
   updateSelection(visibleLinks);
 }
 
