@@ -4,12 +4,12 @@ This document provides guidelines for AI agents working in this repository.
 
 ## Project Overview
 
-Simple homepage dashboard - a static HTML/JS application generated from a YAML configuration file. It displays service links with local/external mode switching, search, drag-and-drop reordering, keyboard navigation, and customizable settings.
+Simple homepage dashboard - a static HTML/JS application generated from a YAML configuration file. It displays service links with dynamic group filtering, search, drag-and-drop reordering, keyboard navigation, and customizable settings.
 
 ## Build Commands
 
 ```bash
-python3 build.py                    # Generates index.html from services.yml
+python3 build.py                    # Generates index.html from services.yml (requires PyYAML)
 python3 build.py --example          # Generates example.html from services.example.yml
 ```
 
@@ -60,14 +60,14 @@ Open `index.html` directly in a browser. No build server required.
 
 - Use f-strings for string formatting
 - 4-space indentation
-- Import standard library modules first, then third-party
+- Import standard library modules first, then third-party (PyYAML)
 - Keep the YAML parser simple - this is a minimal build script
 
 ### Naming Conventions
 
-- IDs/Classes: kebab-case (e.g., `modeToggle`, `toggle-switch`)
+- IDs/Classes: kebab-case (e.g., `groupToggle`, `toggle-switch`)
 - JavaScript variables: camelCase (e.g., `draggedItem`, `touchStartY`)
-- Data attributes: kebab-case (e.g., `data-name`, `data-type`)
+- Data attributes: kebab-case (e.g., `data-name`, `data-groups`)
 - Python: snake_case (e.g., `yaml_file`, `output_file`)
 
 ### Error Handling
@@ -82,17 +82,32 @@ Open `index.html` directly in a browser. No build server required.
 ```yaml
 title: Home Page              # Browser tab title
 header: Dashboard             # Header display (optional, defaults to title)
+
+# Define groups (dynamic, displayed in group selector)
+groups:
+  - id: external
+    name: External
+  - id: local
+    name: Local
+
+# List your services
 services:
   - name: ServiceName
-    url: https://example.com        # Required - external URL
-    local: http://localhost:8080    # Optional - local URL
-    icon: emoji or text
+    url: https://example.com
+    icon: 🛠
+    groups: [external]
 ```
 
 - `title` - Browser tab title (default: "Home Page")
 - `header` - Header display text (optional, defaults to title value)
-- `url` required - used in external mode
-- `local` optional - used in local mode
+- `groups` - List of group definitions (id + name)
+  - An implicit "all" group is added automatically (shows all services)
+- `services` - List of service entries:
+  - `name` (required) - Display name
+  - `url` (required) - Service URL
+  - `icon` - Emoji or text icon
+  - `groups` (required) - List of group IDs the service belongs to
+  - Services with no groups default to "all" only
 
 ## File Structure
 
@@ -100,11 +115,11 @@ services:
 /homepage
 ├── index.html            # Generated (do not edit)
 ├── example.html          # Generated example
-├── build.py              # Build script
+├── build.py              # Build script (requires PyYAML)
 ├── src/
 │   ├── template.html     # HTML template
-│   ├── style.css         # Styles
-│   └── script.js         # JavaScript
+│   ├── style.css        # Styles
+│   └── script.js        # JavaScript
 ├── services.yml          # Service configuration
 ├── services.example.yml
 └── AGENTS.md
@@ -121,9 +136,15 @@ services:
 ## Common Tasks
 
 ### Add a new service
-1. Edit `services.yml`, add service entry with name, url, local (optional), icon
+1. Edit `services.yml`, add service entry with name, url, icon, groups
 2. Run `python3 build.py`
 3. Test in browser
+
+### Add a new group
+1. Add group entry to `groups` section in `services.yml`
+2. Assign services to the new group via `groups` array
+3. Run `python3 build.py`
+4. Test group selector in browser
 
 ### Add a new setting
 1. Add button to settings dropdown in HTML
@@ -141,18 +162,19 @@ services:
 
 ## Features
 
-### Mode Toggle
-- External mode: Uses `url` property
-- Local mode: Uses `local` property
-- Services with only `url` appear in external mode only
-- Services with only `local` appear in local mode only
+### Group Filtering
+- Dynamic groups defined in `services.yml`
+- Click group indicator (left of footer) to open group selector
+- Cycle groups with `/` key
+- Services belong to one or more groups via `groups` array
+- "All" group shows all services (added automatically)
 
 ### Search & Keyboard Navigation
 - Type any key to focus search and filter
 - Arrow keys to navigate filtered results
 - Enter to open selected service
 - Escape to clear search
-- `/` to toggle Local/External mode
+- `/` to cycle group
 - `?` to show keyboard shortcuts overlay
 
 ### Settings Panel (Keyboard)
@@ -172,6 +194,7 @@ services:
 
 ### Settings Panel
 - Theme: Toggle light/dark mode (stored in `homepage-theme`)
+- Group: Cycle through groups (stored in `homepage-group`)
 - Clock: Toggle 12h/24h format (stored in `homepage-clock24`)
 - Date: Show/hide date display (stored in `homepage-date`)
 - Search: Show/hide search bar (stored in `homepage-search`)
@@ -187,7 +210,7 @@ services:
 ### Core Functions
 - `updateTime()` - Updates clock and date display
 - `saveOrder()` / `loadOrder()` - localStorage persistence for order
-- `setMode(local)` - Switch between local/external mode
+- `setGroup(groupId)` - Filter services by group
 - `showToast(msg)` - Show toast notification
 - `copyLink(url)` - Copy URL to clipboard
 - `filterServices(query)` - Filter services by name
@@ -203,12 +226,15 @@ services:
 - `setCompact(compact)` - Toggle compact mode
 
 ### Global State
-- `toggle`, `grid`, `links`, `draggedItem`, `touchDragItem`
-- `longPressTimer`, `longPressed`, `selectedIndex`
+- `groupToggle`, `groupIndicator`, `groupSelector`, `groupOptions`
+- `GROUPS` - Array of group objects from `window.GROUPS`
+- `currentGroup` - Currently selected group ID
+- `grid`, `links`, `draggedItem`, `selectedIndex`
 - `settingsBtn`, `settingsDropdown`, `settingsFocusIndex`
 
 ### localStorage Keys
 - `homepage-order` - Service order
+- `homepage-group` - Selected group ID (e.g., "external", "local", "all")
 - `homepage-theme` - Theme preference (light/dark)
 - `homepage-clock24` - Clock format (true/false)
 - `homepage-date` - Date visibility (true/false)

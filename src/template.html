@@ -23,11 +23,9 @@
     <div class="bottom-bar">
       <div class="group-indicator" id="groupIndicator">
         <span class="group-label">Group:</span>
-        <span class="group-value" id="groupValue">External</span>
+        <span class="group-value" id="groupValue"></span>
         <div class="group-selector" id="groupSelector">
-          <button class="group-option" data-group="0">External</button>
-          <button class="group-option" data-group="1">Local</button>
-          <button class="group-option" data-group="2">All</button>
+          <!-- Dynamic options rendered by JS from window.GROUPS -->
         </div>
       </div>
       <footer class="hints-footer">
@@ -38,7 +36,7 @@
         <button id="settingsBtn" class="settings-btn">⚙</button>
         <div id="settingsDropdown" class="settings-dropdown" tabindex="0">
           <button id="themeToggle" class="settings-option"><span class="label">Theme</span><span class="value">🌙</span></button>
-          <button id="groupToggle" class="settings-option"><span class="label">Group</span><span class="value">External</span></button>
+          <button id="groupToggle" class="settings-option"><span class="label">Group</span><span class="value">All</span></button>
           <button id="clockToggle" class="settings-option"><span class="label">Clock</span><span class="value">24h</span></button>
           <button id="dateToggle" class="settings-option"><span class="label">Date</span><span class="value">On</span></button>
           <button id="searchToggle" class="settings-option"><span class="label">Search</span><span class="value">On</span></button>
@@ -62,6 +60,7 @@
     <div class="hint-row"><span class="key">?</span><span>Show shortcuts</span></div>
   </div>
   <script>
+    window.GROUPS = {{groups_json}};
 {{js}}
   </script>
 </body>

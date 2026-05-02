@@ -1,38 +1,40 @@
 title: Home Page
 header: Dashboard
 
+# Metadata for your UI layout
+groups:
+  - id: infrastructure
+    name: Infrastructure
+    icon: 🛠️
+  - id: monitoring
+    name: Monitoring
+    icon: 📈
+  - id: automation
+    name: Automation
+    icon: 🤖
+
 services:
-  - name: Both
-    url: https://domain.com
-    local: http://localhost:8080
-    icon: 🛠
+  - name: Service Alpha
+    url: https://alpha.example.com
+    icon: 🚀
+    groups: [ infrastructure, monitoring, automation ]
 
-  - name: Both 2
-    url: https://domain.com
-    local: http://localhost:8080
-    icon: 🛠
+  - name: Service Bravo
+    url: https://bravo.example.com
+    icon: 🛰️
+    groups: [ infrastructure ]
 
-  - name: Both 3
-    url: https://domain.com
-    local: http://localhost:8080
-    icon: 🛠
+  - name: Service Charlie
+    url: https://charlie.example.com
+    icon: 📡
+    groups: [ monitoring, infrastructure ]
 
-  - name: External
-    url: https://domain.com
-    icon: 🌐
+  - name: Service Delta
+    url: https://delta.example.com
+    icon: 🔋
+    groups: [ automation ]
 
-  - name: External 2
-    url: https://domain.com
-    icon: 🌐
-
-  - name: External 3
-    url: https://domain.com
-    icon: 🌐
-
-  - name: Internal
-    local: https://localhost:9090
-    icon: 🏠
-
-  - name: Internal 2
-    local: https://localhost:9090
-    icon: 🏠
+  - name: Service Echo
+    url: https://echo.example.com
+    icon: 📟
+    groups: [ monitoring ]

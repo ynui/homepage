@@ -18,8 +18,8 @@ const groupToggle = document.getElementById('groupToggle');
 const grid = document.querySelector('.grid');
 const links = [...document.querySelectorAll('.grid a')];
 
-const GROUPS = ['External', 'Local', 'All'];
-let currentGroup = 0;
+const GROUPS = window.GROUPS || [{id: 'all', name: 'All'}];
+let currentGroup = GROUPS[0].id;
 
 let draggedItem = null;
 
@@ -65,42 +65,59 @@ links.forEach(link => {
   });
 });
 
-function setGroup(group) {
-  const isLocal = group === 1;
-  const isAll = group === 2;
+function setGroup(groupId) {
   links.forEach(link => {
-    const type = link.dataset.type;
-    if (type === 'both') {
-      link.href = isLocal ? link.dataset.local : link.dataset.external;
+    const groups = link.dataset.groups.split(' ');
+    if (groupId === 'all') {
       link.classList.remove('hidden');
-    } else if (type === 'local') {
-      link.href = link.dataset.local;
-      link.classList.toggle('hidden', !isLocal && !isAll);
-    } else if (type === 'external') {
-      link.href = link.dataset.external;
-      link.classList.toggle('hidden', isLocal && !isAll);
+      link.href = link.dataset.defaultUrl || link.href;
+    } else if (groups.includes(groupId)) {
+      link.classList.remove('hidden');
+      link.href = link.dataset.defaultUrl || link.href;
+    } else {
+      link.classList.add('hidden');
     }
   });
 }
 
 const groupIndicator = document.getElementById('groupIndicator');
 const groupValue = document.getElementById('groupValue');
-const groupSelector = document.getElementById('groupSelector');
-const groupOptions = [...document.querySelectorAll('.group-option')];
+let groupSelector = document.getElementById('groupSelector');
+let groupOptions = [];
 
 function cycleGroup() {
-  currentGroup = (currentGroup + 1) % 3;
-  groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
-  groupValue.textContent = GROUPS[currentGroup];
+  const currentIndex = GROUPS.findIndex(g => g.id === currentGroup);
+  const nextIndex = (currentIndex + 1) % GROUPS.length;
+  currentGroup = GROUPS[nextIndex].id;
+  groupToggle.querySelector('.value').textContent = GROUPS[nextIndex].name;
+  const nextText = GROUPS[nextIndex].icon ? `${GROUPS[nextIndex].icon} ${GROUPS[nextIndex].name}` : GROUPS[nextIndex].name;
+  groupValue.textContent = nextText;
   localStorage.setItem('homepage-group', currentGroup);
   setGroup(currentGroup);
   filterServices(search.value);
-  showToast(`Group: ${GROUPS[currentGroup]}`);
+  showToast(`Group: ${GROUPS[nextIndex].name}`);
 }
 
-currentGroup = parseInt(localStorage.getItem('homepage-group')) || 0;
-groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
-groupValue.textContent = GROUPS[currentGroup];
+// Initialize group selector options from GROUPS
+groupSelector = document.getElementById('groupSelector');
+GROUPS.forEach(g => {
+  const btn = document.createElement('button');
+  btn.className = 'group-option';
+  btn.dataset.group = g.id;
+  btn.innerHTML = g.icon ? `${g.icon} ${g.name}` : g.name;
+  groupSelector.appendChild(btn);
+});
+
+// Re-query groupOptions after dynamic creation
+groupOptions = [...document.querySelectorAll('.group-option')];
+
+const savedGroup = localStorage.getItem('homepage-group');
+const initialGroup = GROUPS.find(g => g.id === savedGroup) ? savedGroup : GROUPS[0].id;
+currentGroup = initialGroup;
+const initialGroupObj = GROUPS.find(g => g.id === currentGroup);
+const initialText = initialGroupObj.icon ? `${initialGroupObj.icon} ${initialGroupObj.name}` : initialGroupObj.name;
+groupToggle.querySelector('.value').textContent = initialGroupObj.name;
+groupValue.textContent = initialText;
 setGroup(currentGroup);
 
 groupToggle.addEventListener('click', cycleGroup);
@@ -113,14 +130,16 @@ groupIndicator.addEventListener('click', (e) => {
 groupOptions.forEach(opt => {
   opt.addEventListener('click', (e) => {
     e.stopPropagation();
-    currentGroup = parseInt(opt.dataset.group);
-    groupToggle.querySelector('.value').textContent = GROUPS[currentGroup];
-    groupValue.textContent = GROUPS[currentGroup];
+    currentGroup = opt.dataset.group;
+    const groupObj = GROUPS.find(g => g.id === currentGroup);
+    groupToggle.querySelector('.value').textContent = groupObj.name;
+    const displayText = groupObj.icon ? `${groupObj.icon} ${groupObj.name}` : groupObj.name;
+    groupValue.textContent = displayText;
     localStorage.setItem('homepage-group', currentGroup);
     setGroup(currentGroup);
     filterServices(search.value);
     groupSelector.classList.remove('active');
-    showToast(`Group: ${GROUPS[currentGroup]}`);
+    showToast(`Group: ${groupObj.name}`);
   });
 });
 
@@ -133,10 +152,15 @@ document.addEventListener('click', (e) => {
 const toast = document.getElementById('toast');
 let longPressTimer;
 
+let toastTimeout = null;
 function showToast(msg) {
+  if (toastTimeout) clearTimeout(toastTimeout);
   toast.textContent = msg;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 1500);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('show');
+    toastTimeout = null;
+  }, 1500);
 }
 
 function copyLink(url) {
@@ -386,16 +410,13 @@ let selectedIndex = -1;
 
 function filterServices(query) {
   const q = query.toLowerCase();
-  const isLocal = currentGroup === 1;
-  const isAll = currentGroup === 2;
+  const isAll = currentGroup === 'all';
   let visibleLinks = [];
   links.forEach(link => {
-    const type = link.dataset.type;
-    let isTypeMatch = true;
-    if (type === 'local') isTypeMatch = isLocal || isAll;
-    else if (type === 'external') isTypeMatch = !isLocal || isAll;
+    const groups = link.dataset.groups.split(' ');
+    const isGroupMatch = isAll || groups.includes(currentGroup);
     const name = link.textContent.toLowerCase();
-    const isMatch = isTypeMatch && (!q || name.includes(q));
+    const isMatch = isGroupMatch && (!q || name.includes(q));
     link.classList.toggle('hidden', !isMatch);
     if (isMatch) visibleLinks.push(link);
   });
