@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{title}}</title>
+  <title>{{__TITLE__}}</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>">
   <style>
-{{css}}
+{{__CSS__}}
   </style>
 </head>
 <body>
   <main>
     <header>
-      <h1 id="headerTitle">{{header}}</h1>
+      <h1 id="headerTitle">{{__HEADER__}}</h1>
       <div class="time" id="time"></div>
       <div class="date" id="date"></div>
       <input type="text" id="search" class="search" placeholder="Search...">
     </header>
     <div class="grid">
-{{services}}
+{{__SERVICES__}}
     </div>
     <div class="bottom-bar">
       <div class="group-indicator" id="groupIndicator">
@@ -60,8 +60,8 @@
     <div class="hint-row"><span class="key">?</span><span>Show shortcuts</span></div>
   </div>
   <script>
-    window.GROUPS = {{groups_json}};
-{{js}}
+window.GROUPS = {{__GROUPS_JSON__}};
+{{__JS__}}
   </script>
 </body>
 </html>

@@ -62,12 +62,12 @@ with open('src/script.js') as f:
     js = f.read()
 
 html = (template
-    .replace('{{title}}', title)
-    .replace('{{header}}', header)
-    .replace('{{services}}', services_html)
-    .replace('{{css}}', css)
-    .replace('{{js}}', js)
-    .replace('{{groups_json}}', groups_json))
+    .replace('{{__TITLE__}}', title)
+    .replace('{{__HEADER__}}', header)
+    .replace('{{__SERVICES__}}', services_html)
+    .replace('{{__CSS__}}', css)
+    .replace('{{__JS__}}', js)
+    .replace('{{__GROUPS_JSON__}}', groups_json))
 
 with open(output_file, 'w') as f:
     f.write(html)
