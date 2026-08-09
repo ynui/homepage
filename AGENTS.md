@@ -11,6 +11,8 @@ Simple homepage dashboard - a static HTML/JS application generated from a YAML c
 ```bash
 python3 build.py                    # Generates index.html from services.yml (requires PyYAML)
 python3 build.py --example          # Generates example.html from services.example.yml
+python3 build.py --open             # Opens the generated file in the browser
+                                    # Flags combine: python3 build.py --example --open
 ```
 
 Open `index.html` directly in a browser. No build server required.

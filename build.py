@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import sys
 import json
+import webbrowser
 import yaml
+from pathlib import Path
 
+open_result = '--open' in sys.argv
 example = None
-if len(sys.argv) > 1 and sys.argv[1].startswith('--'):
-    example = sys.argv[1][2:]
+for arg in sys.argv[1:]:
+    if arg.startswith('--') and arg != '--open':
+        example = arg[2:]
 
 yaml_file = f'services.{example}.yml' if example else 'services.yml'
 output_file = f'{example}.html' if example else 'index.html'
@@ -85,3 +89,6 @@ with open(output_file, 'w') as f:
     f.write(html)
 
 print(f'Generated {output_file} with {len(services)} services')
+
+if open_result:
+    webbrowser.open(Path(output_file).resolve().as_uri())

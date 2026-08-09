@@ -23,6 +23,9 @@ python3 build.py
 
 # Generate example
 python3 build.py --example
+
+# Open the generated file in your browser
+python3 build.py --open
 ```
 
 ## Configuration
