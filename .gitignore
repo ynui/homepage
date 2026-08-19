@@ -1,3 +1,4 @@
 services.yml
-index.html
+output/*
+!output/example.html
 __pycache__

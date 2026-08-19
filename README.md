@@ -1,6 +1,6 @@
 # Homepage
 
-A minimal, keyboard-friendly homepage dashboard.
+A minimal, keyboard-friendly homepage dashboard with web and CLI frontends.
 
 ## Features
 
@@ -11,6 +11,7 @@ A minimal, keyboard-friendly homepage dashboard.
 - **Drag-and-Drop**: Reorder services (persists in browser)
 - **Mobile Friendly**: Long-press (500ms) with haptic feedback to copy URL
 - **Customizable**: Extensive settings panel for theme, clock, and layout
+- **CLI TUI**: Terminal-based interface with health checks, search, and color themes
 
 ## Quick Start
 
@@ -18,14 +19,17 @@ A minimal, keyboard-friendly homepage dashboard.
 # Edit services
 vim services.yml
 
-# Build
-python3 build.py
+# Build everything (web + CLI)
+make build
 
-# Generate example
-python3 build.py --example
+# Build only web
+make build-html
 
-# Open the generated file in your browser
-python3 build.py --open
+# Build only CLI
+make build-cmd
+
+# Generate example and open in browser
+python3 web/build.py --open
 ```
 
 ## Configuration
@@ -103,22 +107,33 @@ Click the ⚙ button or press `,` to access:
 ## Deployment
 
 ```bash
-python3 build.py
-# Upload index.html to your web server
+make build
+# Upload output/index.html to your web server
 ```
 
 ## Files
 
 ```
 .
-├── src/
-│   ├── template.html    # HTML template
-│   ├── style.css        # Styles
-│   └── script.js        # JavaScript
-├── services.yml         # Service definitions
-├── services.example.yml # Example config
-├── build.py             # Build script (requires PyYAML)
-├── index.html           # Generated output (do not edit)
-├── AGENTS.md            # Agent guidelines
+├── web/
+│   ├── build.py             # Build script (requires PyYAML)
+│   └── src/
+│       ├── template.html    # HTML template
+│       ├── style.css        # Styles
+│       ├── script.js        # JavaScript
+│       └── health.js        # Health check module
+├── cli/
+│   ├── tui/
+│   │   └── main.go          # Go TUI (bubbletea/lipgloss)
+│   ├── go.mod
+│   └── go.sum
+├── services.yml             # Service definitions
+├── services.example.yml     # Example config
+├── Makefile                 # Build orchestration
+├── output/                  # Generated files (gitignored)
+│   ├── index.html
+│   ├── example.html
+│   └── tui
+├── AGENTS.md
 └── README.md
 ```

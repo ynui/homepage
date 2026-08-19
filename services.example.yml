@@ -15,12 +15,12 @@ groups:
 
 services:
   - name: Service Alpha
-    url: https://alpha.example.com
+    url: https://www.example.com
     icon: 🚀
     groups: [ infrastructure, monitoring, automation ]
 
   - name: Service Bravo
-    url: https://bravo.example.com
+    url: https://www.example.com
     icon: 🛰️
     groups: [ infrastructure ]
 
@@ -35,11 +35,11 @@ services:
     groups: [ automation ]
 
   - name: Service Echo
-    url: https://echo.example.com
+    url: https://www.example.com
     icon: 📟
     groups: [ monitoring ]
 
   - name: Service Foxtrot
-    url: https://foxtrot.example.com
+    url: https://www.example.com
     icon: 🖥
     # groups: [] # no groups

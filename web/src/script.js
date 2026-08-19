@@ -622,6 +622,11 @@ document.addEventListener('keydown', (e) => {
     cycleGroup();
     return;
   }
+  if (e.key === 'h' || e.key === 'H') {
+    e.preventDefault();
+    if (typeof checkAllHealth === 'function') checkAllHealth();
+    return;
+  }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
     e.preventDefault();
     if (document.activeElement !== search) {

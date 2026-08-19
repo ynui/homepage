@@ -4,8 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'build.py'
-      - 'src/**'
+      - 'web/**'
       - 'services.example.yml'
       - '.github/workflows/deploy-example.yml'
 
@@ -29,18 +28,18 @@ jobs:
     - name: Install dependencies
       run: pip install PyYAML
     - name: Build example
-      run: python3 build.py --example
+      run: python3 web/build.py --example
     - name: Commit example.html
       run: |
-        if ! git diff --quiet example.html; then
+        if ! git diff --quiet output/example.html; then
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add example.html
+          git add output/example.html
           git commit -m "Update example.html"
           git push
         fi
     - name: Prepare artifact
-      run: mkdir _site && cp example.html _site/index.html
+      run: mkdir _site && cp output/example.html _site/index.html
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v4
       with:
