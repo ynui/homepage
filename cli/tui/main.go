@@ -223,13 +223,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.searchInput.SetValue("")
 				m.rebuildFilter()
 				return m, nil
-			case "enter":
-				m.searching = false
-				m.rebuildFilter()
-				if len(m.filtered) > 0 {
-					m.cursor = m.filtered[0]
+		case "enter":
+			m.searching = false
+			m.rebuildFilter()
+			if len(m.filtered) > 0 {
+				m.cursor = m.filtered[0]
+				if svc := m.selectedService(); svc != nil {
+					openBrowser(svc.URL)
 				}
-				return m, nil
+			}
+			return m, nil
 			}
 		}
 		var cmd tea.Cmd
@@ -1262,7 +1265,11 @@ func main() {
 	os.Remove(debugLog)
 	dlog("tui started")
 
-	cfg, err := loadConfig()
+	var cfgPath string
+	if len(os.Args) > 1 {
+		cfgPath = os.Args[1]
+	}
+	cfg, err := loadConfig(cfgPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading services.yml: %v\n", err)
 		os.Exit(1)

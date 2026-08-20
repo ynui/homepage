@@ -56,9 +56,19 @@ func dlog(msg string) {
 	log.Println(msg)
 }
 
-func loadConfig() (Config, error) {
+func loadConfig(path string) (Config, error) {
 	var cfg Config
-	return cfg, yaml.Unmarshal(servicesYML, &cfg)
+	var data []byte
+	if path != "" {
+		var err error
+		data, err = os.ReadFile(path)
+		if err != nil {
+			return cfg, fmt.Errorf("reading %s: %w", path, err)
+		}
+	} else {
+		data = servicesYML
+	}
+	return cfg, yaml.Unmarshal(data, &cfg)
 }
 
 func buildRows(cfg Config, services []Service) []row {

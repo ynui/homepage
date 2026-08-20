@@ -28,6 +28,15 @@ make build-html
 # Build only CLI
 make build-cmd
 
+# Open web dashboard in browser
+make run-web
+
+# Launch CLI TUI
+make run-cli
+
+# CLI with custom config
+./output/tui path/to/services.yml
+
 # Generate example and open in browser
 python3 web/build.py --open
 ```
@@ -92,10 +101,10 @@ Click the ⚙ button or press `,` to access:
 
 - **Type**: Filter services and jump to first result (auto-scrolls to view)
 - **Arrow Keys**: Navigate filtered results (or settings when open)
-- **Enter**: Open selected service (or activate settings option)
+- **Enter**: Open selected service in browser (search + Enter opens first match)
 - **Esc**: Clear search / Close settings / Close hints
+- **/**: Search / filter
 - **,**: Toggle settings panel
-- **/**: Cycle group
 - **?**: Show keyboard shortcuts overlay
 
 ### Mobile
