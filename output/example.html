@@ -575,7 +575,7 @@ body {
         Service Alpha
       </a>
       <a href="https://www.example.com" data-name="service bravo" data-groups="infrastructure" data-url="https://www.example.com" data-default-url="https://www.example.com">
-        <span class="icon">🛰️</span>
+        <span class="icon">🛰</span>
         Service Bravo
       </a>
       <a href="https://charlie.example.com" data-name="service charlie" data-groups="monitoring infrastructure" data-url="https://charlie.example.com" data-default-url="https://charlie.example.com">
@@ -638,7 +638,7 @@ body {
     <div class="hint-row"><span class="key">?</span><span>Show shortcuts</span></div>
   </div>
   <script>
-window.GROUPS = [{"id": "infrastructure", "name": "Infrastructure", "icon": "\ud83d\udee0\ufe0f"}, {"id": "monitoring", "name": "Monitoring", "icon": "\ud83d\udcc8"}, {"id": "automation", "name": "Automation", "icon": "\ud83e\udd16"}, {"id": "nogroup", "name": "No Group", "icon": ""}, {"id": "all", "name": "All", "icon": ""}];
+window.GROUPS = [{"id": "infrastructure", "name": "Infrastructure", "icon": "\ud83d\udee0"}, {"id": "monitoring", "name": "Monitoring", "icon": "\ud83d\udcc8"}, {"id": "automation", "name": "Automation", "icon": "\ud83e\udd16"}, {"id": "nogroup", "name": "No Group", "icon": ""}, {"id": "all", "name": "All", "icon": ""}];
 function updateTime() {
   const now = new Date();
   const is24h = localStorage.getItem('homepage-clock24') !== 'false';
@@ -1306,11 +1306,11 @@ async function checkAllHealth() {
       window.healthStatus[name] = 'offline';
     } finally {
       clearTimeout(timer);
+      renderHealthIndicators();
     }
   });
 
   await Promise.allSettled(promises);
-  renderHealthIndicators();
 }
 
 function renderHealthIndicators() {
