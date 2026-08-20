@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -245,13 +246,12 @@ func (s Settings) applyTheme() {
 	searchPrompt = lipgloss.NewStyle().Foreground(accent).Bold(true).Render("/ ")
 }
 
+//go:embed services.yml
+var servicesYML []byte
+
 func loadConfig() (Config, error) {
-	data, err := os.ReadFile("services.yml")
-	if err != nil {
-		return Config{}, err
-	}
 	var cfg Config
-	return cfg, yaml.Unmarshal(data, &cfg)
+	return cfg, yaml.Unmarshal(servicesYML, &cfg)
 }
 
 func buildRows(cfg Config, services []Service) []row {

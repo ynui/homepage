@@ -1,7 +1,7 @@
 title: Home Page
 header: Dashboard
 
-# Metadata for your UI layout
+# Metadata for the UI layout
 groups:
   - id: infrastructure
     name: Infrastructure

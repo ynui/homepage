@@ -2,3 +2,4 @@ services.yml
 output/*
 !output/example.html
 __pycache__
+cli/tui/services.yml
