@@ -25,11 +25,11 @@ async function checkAllHealth() {
       window.healthStatus[name] = 'offline';
     } finally {
       clearTimeout(timer);
+      renderHealthIndicators();
     }
   });
 
   await Promise.allSettled(promises);
-  renderHealthIndicators();
 }
 
 function renderHealthIndicators() {

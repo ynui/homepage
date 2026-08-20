@@ -2,108 +2,33 @@ package main
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
-	"gopkg.in/yaml.v3"
 )
 
-// ── types ────────────────────────────────────────────────
+//go:generate cp ../../services.yml services.yml
 
-type Service struct {
-	Name   string   `yaml:"name"`
-	URL    string   `yaml:"url"`
-	Icon   string   `yaml:"icon"`
-	Groups []string `yaml:"groups"`
-}
+//go:embed services.yml
+var servicesYML []byte
 
-type Group struct {
-	ID   string `yaml:"id"`
-	Name string `yaml:"name"`
-	Icon string `yaml:"icon"`
-}
-
-type Config struct {
-	Title    string    `yaml:"title"`
-	Header   string    `yaml:"header"`
-	Groups   []Group   `yaml:"groups"`
-	Services []Service `yaml:"services"`
-}
-
-type ColorTheme struct {
-	Name      string
-	Accent    lipgloss.Color
-	AccentDim lipgloss.Color
-	Icon      lipgloss.Color
-}
-
-var colorThemes = []ColorTheme{
-	{"Indigo", lipgloss.Color("141"), lipgloss.Color("98"), lipgloss.Color("214")},
-	{"Teal", lipgloss.Color("51"), lipgloss.Color("45"), lipgloss.Color("81")},
-	{"Rose", lipgloss.Color("205"), lipgloss.Color("132"), lipgloss.Color("211")},
-	{"Gold", lipgloss.Color("220"), lipgloss.Color("178"), lipgloss.Color("228")},
-	{"Lime", lipgloss.Color("112"), lipgloss.Color("70"), lipgloss.Color("154")},
-	{"Sky", lipgloss.Color("75"), lipgloss.Color("66"), lipgloss.Color("117")},
-}
-
-type Settings struct {
-	Theme    int    `json:"theme"`
-	Compact  bool   `json:"compact"`
-	DateTime bool   `json:"datetime"`
-	Alias    string `json:"alias"`
-}
-
-type healthResult struct {
-	index  int
-	status string
-}
-
-type healthBatch struct {
-	results []healthResult
-}
-
-type rowKind int
-
-const (
-	rowGroup rowKind = iota
-	rowService
-)
-
-type row struct {
-	kind       rowKind
-	groupID    string
-	groupName  string
-	groupIcon  string
-	serviceIdx int
-}
-
-// ── palette ──────────────────────────────────────────────
+// ── palette & styles ─────────────────────────────────────
 
 var (
-	accent    = lipgloss.Color("141")
-	accentDim = lipgloss.Color("98")
-	muted     = lipgloss.Color("242")
-	subtle    = lipgloss.Color("245")
-	textHi    = lipgloss.Color("230")
-	green     = lipgloss.Color("42")
-	red       = lipgloss.Color("196")
-	yellow    = lipgloss.Color("214")
+	accent    = lipgloss.Color("#7aa2f7")
+	accentDim = lipgloss.Color("#bb9af7")
+	muted     = lipgloss.Color("#565f89")
+	textHi    = lipgloss.Color("#c0caf5")
+	green     = lipgloss.Color("#9ece6a")
+	red       = lipgloss.Color("#f7768e")
+	yellow    = lipgloss.Color("#e0af68")
 )
-
-// ── styles ───────────────────────────────────────────────
 
 var (
 	titleText = lipgloss.NewStyle().
@@ -128,11 +53,11 @@ var (
 	grpCnt = lipgloss.NewStyle().
 		Foreground(muted)
 
-	selIcon = lipgloss.NewStyle().Foreground(yellow)
-	normIcon = lipgloss.NewStyle().Foreground(yellow)
+	selIcon  = lipgloss.NewStyle().Foreground(yellow)
+	normIcon = lipgloss.NewStyle().Foreground(accentDim)
 
 	selName = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("15")).
+			Foreground(textHi).
 			Bold(true)
 
 	normName = lipgloss.NewStyle().
@@ -185,156 +110,24 @@ type model struct {
 	width    int
 	height   int
 
-	searching  bool
-	query      string
-	filtered   []int
+	searching   bool
+	query       string
+	filtered    []int
 	searchInput textinput.Model
+
+	groupFilter     string
+	collapsedGroups map[string]bool
 
 	settings Settings
 
-	showSettings      bool
-	settingsCursor    int
-	settingsSnapshot  Settings
-	installStatus     string
-	editingAlias      bool
-	aliasInput        textinput.Model
-}
+	showSettings     bool
+	settingsCursor   int
+	settingsSnapshot Settings
+	installStatus    string
+	editingAlias     bool
+	aliasInput       textinput.Model
 
-func settingsPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "homepage", "tui.json")
-}
-
-func loadSettings() Settings {
-	s := Settings{Theme: 0, DateTime: true, Alias: "hp"}
-	data, err := os.ReadFile(settingsPath())
-	if err != nil {
-		return s
-	}
-	json.Unmarshal(data, &s)
-	if s.Theme < 0 || s.Theme >= len(colorThemes) {
-		s.Theme = 0
-	}
-	if s.Alias == "" {
-		s.Alias = "hp"
-	}
-	return s
-}
-
-func saveSettings(s Settings) {
-	dir := filepath.Dir(settingsPath())
-	os.MkdirAll(dir, 0755)
-	data, _ := json.MarshalIndent(s, "", "  ")
-	os.WriteFile(settingsPath(), data, 0644)
-}
-
-func (s Settings) applyTheme() {
-	t := colorThemes[s.Theme]
-	accent = t.Accent
-	accentDim = t.AccentDim
-	normIcon = lipgloss.NewStyle().Foreground(t.Icon)
-	selIcon = lipgloss.NewStyle().Foreground(t.Icon)
-	selName = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Bold(true)
-	normName = lipgloss.NewStyle().Foreground(lipgloss.Color("230"))
-	textHi = lipgloss.Color("230")
-	// rebuild styles that reference accent
-	titleText = lipgloss.NewStyle().Foreground(accent).Bold(true)
-	grpHdr = lipgloss.NewStyle().Foreground(accentDim).Bold(true)
-	helpKeyStyle = lipgloss.NewStyle().Foreground(accent).Bold(true)
-	settingValue = lipgloss.NewStyle().Foreground(accent)
-	settingLabel = lipgloss.NewStyle().Foreground(textHi).Bold(true)
-	searchPrompt = lipgloss.NewStyle().Foreground(accent).Bold(true).Render("/ ")
-}
-
-//go:embed services.yml
-var servicesYML []byte
-
-func loadConfig() (Config, error) {
-	var cfg Config
-	return cfg, yaml.Unmarshal(servicesYML, &cfg)
-}
-
-func buildRows(cfg Config, services []Service) []row {
-	groupName := make(map[string]string)
-	groupIcon := make(map[string]string)
-	for _, g := range cfg.Groups {
-		groupName[g.ID] = g.Name
-		groupIcon[g.ID] = g.Icon
-	}
-
-	grouped := make(map[string][]int)
-	var order []string
-	seen := make(map[string]bool)
-	for i, svc := range services {
-		g := "Other"
-		if len(svc.Groups) > 0 {
-			g = svc.Groups[0]
-		}
-		if !seen[g] {
-			seen[g] = true
-			order = append(order, g)
-		}
-		grouped[g] = append(grouped[g], i)
-	}
-
-	var rows []row
-	for _, gid := range order {
-		name := groupName[gid]
-		if name == "" {
-			name = gid
-		}
-		rows = append(rows, row{kind: rowGroup, groupID: gid, groupName: name, groupIcon: groupIcon[gid]})
-		for _, si := range grouped[gid] {
-			rows = append(rows, row{kind: rowService, serviceIdx: si})
-		}
-	}
-	return rows
-}
-
-// ── icon padding ─────────────────────────────────────────
-
-func realStringWidth(s string) int {
-	clean := strings.ReplaceAll(s, "\ufe0f", "")
-	clean = strings.ReplaceAll(clean, "\ufe0e", "")
-	return ansi.StringWidth(clean)
-}
-
-func padIcon(icon string) string {
-	sw := realStringWidth(icon)
-	if sw < iconPadWidth {
-		icon += strings.Repeat(" ", iconPadWidth-sw)
-	}
-	return icon
-}
-
-// ── search ───────────────────────────────────────────────
-
-func searchMatch(query, target string) bool {
-	if query == "" {
-		return true
-	}
-	return strings.Contains(strings.ToLower(target), strings.ToLower(query))
-}
-
-func searchMatchAny(query string, svc Service) bool {
-	return searchMatch(query, svc.Name) ||
-		searchMatch(query, svc.URL) ||
-		searchMatch(query, strings.Join(svc.Groups, " "))
-}
-
-// ── debug ────────────────────────────────────────────────
-
-const debugLog = "/tmp/tui-debug.log"
-
-func dlog(msg string) {
-	f, err := os.OpenFile(debugLog, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	log.SetOutput(f)
-	log.SetFlags(log.Ltime | log.Lmicroseconds)
-	log.Println(msg)
+	showHelp bool
 }
 
 // ── tea ──────────────────────────────────────────────────
@@ -350,22 +143,31 @@ func (m model) Init() tea.Cmd {
 func (m model) startHealth() tea.Cmd {
 	return func() tea.Msg {
 		dlog("health check started")
-		results := make([]healthResult, len(m.services))
-		var wg sync.WaitGroup
+		ch := make(chan healthResult, len(m.services))
 		for i, svc := range m.services {
-			wg.Add(1)
 			go func(idx int, url string) {
-				defer wg.Done()
 				status := checkURL(url)
 				dlog(fmt.Sprintf("  [%d] %s -> %s", idx, url, status))
-				results[idx] = healthResult{index: idx, status: status}
+				ch <- healthResult{index: idx, status: status}
 			}(i, svc.URL)
 		}
-		wg.Wait()
+		for range m.services {
+			r := <-ch
+			sendTeaMsg(r)
+		}
 		dlog("health check complete")
-		return healthBatch{results: results}
+		return healthDoneMsg{}
 	}
 }
+
+type healthDoneMsg struct{}
+
+func sendTeaMsg(msg tea.Msg) {
+	// ponytail: global program reference, only way to send into tea from a goroutine
+	p.Send(msg)
+}
+
+var p *tea.Program
 
 type tickMsg struct{}
 
@@ -375,15 +177,41 @@ func tickCmd() tea.Cmd {
 
 // ── update ───────────────────────────────────────────────
 
-var settingItems = []struct{ label, key string }{
-	{"Theme", "theme"},
-	{"DateTime", "datetime"},
-	{"Compact", "compact"},
-	{"Install CLI", "install"},
-}
-
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+
+	case tickMsg:
+		m.tick++
+		if m.checking || m.settings.DateTime {
+			cmds = append(cmds, tickCmd())
+		}
+		return m, tea.Batch(cmds...)
+
+	case healthResult:
+		m.health[msg.index] = msg.status
+		return m, nil
+
+	case healthDoneMsg:
+		m.checking = false
+		return m, nil
+	}
+
+	if m.showHelp {
+		if msg, ok := msg.(tea.KeyMsg); ok {
+			switch msg.String() {
+			case "?", "esc", "q", "enter", "space", " ":
+				m.showHelp = false
+				return m, nil
+			}
+		}
+		return m, nil
+	}
 
 	if m.searching {
 		switch msg := msg.(type) {
@@ -461,17 +289,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.installStatus = ""
 				m.editingAlias = false
 				return m, nil
-			case "up":
+			case "up", "k":
 				m.settingsCursor--
 				if m.settingsCursor < 0 {
 					m.settingsCursor = len(settingItems) - 1
 				}
-			case "down":
+			case "down", "j":
 				m.settingsCursor++
 				if m.settingsCursor >= len(settingItems) {
 					m.settingsCursor = 0
 				}
-			case "enter", "space":
+			case "enter", "space", " ":
 				item := settingItems[m.settingsCursor]
 				if item.key == "install" {
 					m.editingAlias = true
@@ -499,6 +327,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.settings.Theme = 0
 						}
 					}
+				case "borders":
+					if msg.String() == "left" {
+						m.settings.BorderStyle--
+						if m.settings.BorderStyle < 0 {
+							m.settings.BorderStyle = len(borderSets) - 1
+						}
+					} else {
+						m.settings.BorderStyle++
+						if m.settings.BorderStyle >= len(borderSets) {
+							m.settings.BorderStyle = 0
+						}
+					}
+				case "icons":
+					if msg.String() == "left" {
+						m.settings.IconStyle--
+						if m.settings.IconStyle < 0 {
+							m.settings.IconStyle = 2
+						}
+					} else {
+						m.settings.IconStyle++
+						if m.settings.IconStyle > 2 {
+							m.settings.IconStyle = 0
+						}
+					}
 				case "datetime":
 					m.settings.DateTime = !m.settings.DateTime
 					if m.settings.DateTime {
@@ -519,26 +371,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 	}
 
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		return m, nil
-
-	case tickMsg:
-		m.tick++
-		if m.checking || m.settings.DateTime {
-			cmds = append(cmds, tickCmd())
-		}
-		return m, tea.Batch(cmds...)
-
-	case tea.KeyMsg:
-		switch msg.String() {
+	if msg, ok := msg.(tea.KeyMsg); ok {
+		s := msg.String()
+		switch s {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "up":
+		case "esc":
+			if m.query != "" {
+				m.query = ""
+				m.rebuildFilter()
+			}
+		case "?":
+			m.showHelp = true
+		case "g":
+			m.cycleGroup()
+		case "G":
+			m.cursor = m.lastVisible()
+		case "tab", " ", "space":
+			m.toggleCurrentGroup()
+		case "up", "k":
 			m.moveUp()
-		case "down":
+		case "down", "j":
 			m.moveDown()
 		case "/":
 			m.searching = true
@@ -552,27 +405,103 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Batch(m.startHealth(), tickCmd())
 			}
 		case "enter", "o":
-			if svc := m.selectedService(); svc != nil {
-				openBrowser(svc.URL)
+			if m.cursor < len(m.rows) {
+				if m.rows[m.cursor].kind == rowGroup {
+					m.toggleCurrentGroup()
+				} else {
+					if svc := m.selectedService(); svc != nil {
+						openBrowser(svc.URL)
+					}
+				}
 			}
 		case ",":
 			m.settingsSnapshot = m.settings
 			m.showSettings = true
 			m.settingsCursor = 0
+		default:
+			if len(s) == 1 && s[0] >= '1' && s[0] <= '9' {
+				m.jumpToNumber(int(s[0] - '0'))
+			}
 		}
-
-	case healthBatch:
-		for _, r := range msg.results {
-			m.health[r.index] = r.status
-		}
-		m.checking = false
-		return m, nil
 	}
 
 	return m, tea.Batch(cmds...)
 }
 
 // ── filter / navigation ──────────────────────────────────
+
+func (m *model) jumpToNumber(num int) {
+	count := 0
+	for i, r := range m.rows {
+		if r.kind == rowService && m.isRowVisible(i) {
+			count++
+			if count == num {
+				m.cursor = i
+				return
+			}
+		}
+	}
+}
+
+func (m *model) toggleCurrentGroup() {
+	if m.cursor >= len(m.rows) {
+		return
+	}
+	r := m.rows[m.cursor]
+	gid := ""
+	groupRowIdx := -1
+	if r.kind == rowGroup {
+		gid = r.groupID
+		groupRowIdx = m.cursor
+	} else {
+		svc := m.services[r.serviceIdx]
+		if len(svc.Groups) > 0 {
+			gid = svc.Groups[0]
+		} else {
+			gid = "Other"
+		}
+		for i, gr := range m.rows {
+			if gr.kind == rowGroup && gr.groupID == gid {
+				groupRowIdx = i
+				break
+			}
+		}
+	}
+	if gid == "" {
+		return
+	}
+	if m.collapsedGroups == nil {
+		m.collapsedGroups = make(map[string]bool)
+	}
+	m.collapsedGroups[gid] = !m.collapsedGroups[gid]
+	if m.collapsedGroups[gid] && groupRowIdx >= 0 {
+		m.cursor = groupRowIdx
+	} else {
+		m.snapCursor()
+	}
+}
+
+func (m *model) cycleGroup() {
+	if len(m.cfg.Groups) == 0 {
+		return
+	}
+	if m.groupFilter == "" {
+		m.groupFilter = m.cfg.Groups[0].ID
+	} else {
+		found := false
+		for _, g := range m.cfg.Groups {
+			if found {
+				m.groupFilter = g.ID
+				return
+			}
+			if g.ID == m.groupFilter {
+				found = true
+			}
+		}
+		m.groupFilter = ""
+	}
+	m.snapCursor()
+}
 
 func (m *model) rebuildFilter() {
 	m.filtered = nil
@@ -587,28 +516,31 @@ func (m *model) rebuildFilter() {
 }
 
 func (m *model) snapCursor() {
-	if len(m.filtered) == 0 {
+	if m.cursor < len(m.rows) && m.isRowVisible(m.cursor) {
 		return
 	}
-	for _, fi := range m.filtered {
-		if fi >= m.cursor && m.rows[fi].kind == rowService {
-			m.cursor = fi
+	for i := m.cursor; i < len(m.rows); i++ {
+		if m.isRowVisible(i) {
+			m.cursor = i
 			return
 		}
 	}
-	for i := len(m.filtered) - 1; i >= 0; i-- {
-		if m.rows[m.filtered[i]].kind == rowService {
-			m.cursor = m.filtered[i]
+	for i := m.cursor - 1; i >= 0; i-- {
+		if m.isRowVisible(i) {
+			m.cursor = i
 			return
 		}
 	}
+	m.cursor = 0
 }
 
 func (m model) visibleRows() []int {
 	if m.query == "" {
 		var vis []int
 		for i := range m.rows {
-			vis = append(vis, i)
+			if m.isRowVisible(i) {
+				vis = append(vis, i)
+			}
 		}
 		return vis
 	}
@@ -617,7 +549,7 @@ func (m model) visibleRows() []int {
 
 func (m *model) firstVisible() int {
 	for i := range m.rows {
-		if m.rows[i].kind == rowService && m.isRowVisible(i) {
+		if m.isRowVisible(i) {
 			return i
 		}
 	}
@@ -626,7 +558,7 @@ func (m *model) firstVisible() int {
 
 func (m *model) lastVisible() int {
 	for i := len(m.rows) - 1; i >= 0; i-- {
-		if m.rows[i].kind == rowService && m.isRowVisible(i) {
+		if m.isRowVisible(i) {
 			return i
 		}
 	}
@@ -635,13 +567,13 @@ func (m *model) lastVisible() int {
 
 func (m *model) moveUp() {
 	for i := m.cursor - 1; i >= 0; i-- {
-		if m.rows[i].kind == rowService && m.isRowVisible(i) {
+		if m.isRowVisible(i) && (m.rows[i].kind == rowService || (m.rows[i].kind == rowGroup && m.collapsedGroups[m.rows[i].groupID])) {
 			m.cursor = i
 			return
 		}
 	}
 	for i := len(m.rows) - 1; i > m.cursor; i-- {
-		if m.rows[i].kind == rowService && m.isRowVisible(i) {
+		if m.isRowVisible(i) && (m.rows[i].kind == rowService || (m.rows[i].kind == rowGroup && m.collapsedGroups[m.rows[i].groupID])) {
 			m.cursor = i
 			return
 		}
@@ -650,13 +582,13 @@ func (m *model) moveUp() {
 
 func (m *model) moveDown() {
 	for i := m.cursor + 1; i < len(m.rows); i++ {
-		if m.rows[i].kind == rowService && m.isRowVisible(i) {
+		if m.isRowVisible(i) && (m.rows[i].kind == rowService || (m.rows[i].kind == rowGroup && m.collapsedGroups[m.rows[i].groupID])) {
 			m.cursor = i
 			return
 		}
 	}
 	for i := 0; i < m.cursor; i++ {
-		if m.rows[i].kind == rowService && m.isRowVisible(i) {
+		if m.isRowVisible(i) && (m.rows[i].kind == rowService || (m.rows[i].kind == rowGroup && m.collapsedGroups[m.rows[i].groupID])) {
 			m.cursor = i
 			return
 		}
@@ -672,134 +604,71 @@ func (m model) selectedService() *Service {
 }
 
 func (m model) isRowVisible(i int) bool {
-	if m.query == "" {
-		return true
-	}
-	for _, fi := range m.filtered {
-		if fi == i {
-			return true
+	r := m.rows[i]
+	if m.groupFilter != "" {
+		if r.kind == rowGroup {
+			return false
+		}
+		svc := m.services[r.serviceIdx]
+		match := false
+		for _, g := range svc.Groups {
+			if g == m.groupFilter {
+				match = true
+				break
+			}
+		}
+		if !match {
+			return false
 		}
 	}
-	return false
-}
-
-// ── health ───────────────────────────────────────────────
-
-func checkURL(url string) string {
-	client := &http.Client{
-		Timeout:   5 * time.Second,
-		Transport: &http.Transport{DisableKeepAlives: true},
+	if m.query != "" {
+		if r.kind == rowGroup {
+			for _, fi := range m.filtered {
+				if m.rows[fi].kind == rowService {
+					svc := m.services[m.rows[fi].serviceIdx]
+					for _, g := range svc.Groups {
+						if g == r.groupID {
+							return true
+						}
+					}
+				}
+			}
+			return false
+		}
+		for _, fi := range m.filtered {
+			if fi == i {
+				return true
+			}
+		}
+		return false
 	}
-	resp, err := client.Head(url)
-	if err != nil {
-		resp, err = client.Get(url)
-		if err != nil {
-			return "✗"
+	if r.kind == rowService {
+		gid := "Other"
+		svc := m.services[r.serviceIdx]
+		if len(svc.Groups) > 0 {
+			gid = svc.Groups[0]
+		}
+		if m.collapsedGroups != nil && m.collapsedGroups[gid] {
+			return false
 		}
 	}
-	defer resp.Body.Close()
-	return "✓"
+	return true
 }
 
-func openBrowser(url string) {
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case "darwin":
-		cmd = exec.Command("open", url)
-	case "linux":
-		cmd = exec.Command("xdg-open", url)
-	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	}
-	if cmd != nil {
-		cmd.Start()
-	}
-}
+// ── icon helper ──────────────────────────────────────────
 
-func ensureLocalBinInPATH() string {
-	pathEnv := os.Getenv("PATH")
-	home, err := os.UserHomeDir()
-	if err != nil {
+func (m model) getServiceIcon(svc Service) string {
+	switch m.settings.IconStyle {
+	case 2: // Off
 		return ""
-	}
-	binDir := filepath.Join(home, ".local", "bin")
-
-	for _, p := range filepath.SplitList(pathEnv) {
-		if p == binDir {
-			return ""
+	case 1: // ASCII
+		return "[•]"
+	default: // 0 = Emoji
+		if svc.Icon != "" {
+			return svc.Icon
 		}
+		return "⚙"
 	}
-
-	exportLine := "\n# Added by homepage CLI\nexport PATH=\"$HOME/.local/bin:$PATH\"\n"
-	var updated []string
-
-	zshrc := filepath.Join(home, ".zshrc")
-	if data, err := os.ReadFile(zshrc); err == nil {
-		if !strings.Contains(string(data), `export PATH="$HOME/.local/bin:$PATH"`) {
-			if f, err := os.OpenFile(zshrc, os.O_APPEND|os.O_WRONLY, 0644); err == nil {
-				f.WriteString(exportLine)
-				f.Close()
-				updated = append(updated, "~/.zshrc")
-			}
-		}
-	}
-
-	bashrc := filepath.Join(home, ".bashrc")
-	if data, err := os.ReadFile(bashrc); err == nil {
-		if !strings.Contains(string(data), `export PATH="$HOME/.local/bin:$PATH"`) {
-			if f, err := os.OpenFile(bashrc, os.O_APPEND|os.O_WRONLY, 0644); err == nil {
-				f.WriteString(exportLine)
-				f.Close()
-				updated = append(updated, "~/.bashrc")
-			}
-		}
-	}
-
-	if len(updated) > 0 {
-		return fmt.Sprintf(" (Added to %s)", strings.Join(updated, ", "))
-	}
-	return " (Run: source ~/.zshrc)"
-}
-
-func installCLI(alias string) (string, error) {
-	if alias == "" {
-		alias = "hp"
-	}
-
-	bin, err := os.Executable()
-	if err != nil {
-		return "", fmt.Errorf("locate binary error: %w", err)
-	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("home dir error: %w", err)
-	}
-
-	binDir := filepath.Join(home, ".local", "bin")
-	if err := os.MkdirAll(binDir, 0755); err != nil {
-		return "", fmt.Errorf("mkdir error: %w", err)
-	}
-
-	dst := filepath.Join(binDir, alias)
-
-	data, err := os.ReadFile(bin)
-	if err != nil {
-		if fallbackData, err2 := os.ReadFile("output/tui"); err2 == nil {
-			data = fallbackData
-		} else {
-			return "", fmt.Errorf("read binary error: %w", err)
-		}
-	}
-
-	_ = os.Remove(dst)
-
-	if err := os.WriteFile(dst, data, 0755); err != nil {
-		return "", fmt.Errorf("write binary error: %w", err)
-	}
-
-	pathMsg := ensureLocalBinInPATH()
-	return fmt.Sprintf("Installed ~/.local/bin/%s%s", alias, pathMsg), nil
 }
 
 // ── view ─────────────────────────────────────────────────
@@ -834,6 +703,10 @@ func (m model) groupServiceCount(gid string) int {
 }
 
 func (m model) renderHeader() string {
+	t := colorThemes[m.settings.Theme]
+	bdr := borderSets[m.settings.BorderStyle]
+	bdrStyle := lipgloss.NewStyle().Foreground(t.Border)
+
 	title := m.cfg.Header
 	titleLine := titleText.Render(fmt.Sprintf("  %s ", title))
 
@@ -844,9 +717,17 @@ func (m model) renderHeader() string {
 	}
 
 	subLine := subText.Render(fmt.Sprintf("  %d services", len(m.services)))
+	if m.groupFilter != "" {
+		for _, g := range m.cfg.Groups {
+			if g.ID == m.groupFilter {
+				subLine += lipgloss.NewStyle().Foreground(t.AccentDim).Render(fmt.Sprintf("  [%s]", g.Name))
+				break
+			}
+		}
+	}
 	if m.checking {
 		sp := spinnerFrames[m.tick%len(spinnerFrames)]
-		subLine += "  " + lipgloss.NewStyle().Foreground(yellow).Render(sp)
+		subLine += "  " + lipgloss.NewStyle().Foreground(t.SelectedIcon).Render(sp)
 	} else if len(m.health) > 0 {
 		ok, fail := m.countHealth()
 		subLine += "  " + statOk.Render(fmt.Sprintf("%d✓", ok))
@@ -856,7 +737,7 @@ func (m model) renderHeader() string {
 	}
 
 	w := m.width - 2
-	bar := strings.Repeat("═", w)
+	bar := strings.Repeat(bdr.Horizontal, w)
 
 	titleW := realStringWidth(titleLine)
 	rightTopW := realStringWidth(rightTop)
@@ -873,60 +754,126 @@ func (m model) renderHeader() string {
 	}
 	mid2 := subLine + strings.Repeat(" ", padRight)
 
-	top := subText.Render("╔" + bar + "╗")
-	m1 := subText.Render("║") + mid1 + subText.Render("║")
-	m2 := subText.Render("║") + mid2 + subText.Render("║")
-	bot := subText.Render("╚" + bar + "╝")
+	top := bdrStyle.Render(bdr.TopLeft + bar + bdr.TopRight)
+
+	padMid := func(s string) string {
+		sw := realStringWidth(s)
+		if sw < w {
+			return s + strings.Repeat(" ", w-sw)
+		}
+		if sw > w {
+			s = ansi.Truncate(s, w, "")
+			sw = realStringWidth(s)
+			if sw < w {
+				s += strings.Repeat(" ", w-sw)
+			}
+			return s
+		}
+		return s
+	}
+
+	m1 := bdrStyle.Render(bdr.Vertical) + padMid(mid1) + bdrStyle.Render(bdr.Vertical)
+	m2 := bdrStyle.Render(bdr.Vertical) + padMid(mid2) + bdrStyle.Render(bdr.Vertical)
+	bot := bdrStyle.Render(bdr.BottomLeft + bar + bdr.BottomRight)
 
 	return top + "\n" + m1 + "\n" + m2 + "\n" + bot
 }
 
 func (m model) renderDetail() string {
-	svc := m.selectedService()
-	if svc == nil || m.cursor >= len(m.rows) {
+	if m.cursor >= len(m.rows) {
 		return ""
 	}
+	t := colorThemes[m.settings.Theme]
+	bdr := borderSets[m.settings.BorderStyle]
+	bdrStyle := lipgloss.NewStyle().Foreground(t.Border)
 
-	icon := svc.Icon
-	if icon == "" {
-		icon = "⚙"
-	}
+	var line1, line2, line3 string
 
-	healthStr := ""
-	if s, ok := m.health[m.rows[m.cursor].serviceIdx]; ok {
-		if s == "✓" {
-			healthStr = okDot + lipgloss.NewStyle().Foreground(green).Render(" online")
-		} else {
-			healthStr = failDot + lipgloss.NewStyle().Foreground(red).Render(" offline")
+	if m.rows[m.cursor].kind == rowGroup {
+		r := m.rows[m.cursor]
+		icon := r.groupIcon
+		if icon == "" {
+			icon = "▸"
 		}
-	}
+		isCollapsed := m.collapsedGroups != nil && m.collapsedGroups[r.groupID]
+		state := "expanded"
+		if isCollapsed {
+			state = "folded"
+		}
+		cnt := m.groupServiceCount(r.groupID)
+		var svcNames []string
+		for _, s := range m.services {
+			for _, g := range s.Groups {
+				if g == r.groupID {
+					svcNames = append(svcNames, s.Name)
+					break
+				}
+			}
+		}
 
-	line1 := fmt.Sprintf("  %s  %s  %s", icon,
-		lipgloss.NewStyle().Bold(true).Foreground(textHi).Render(svc.Name),
-		healthStr,
-	)
-	line2 := fmt.Sprintf("  %s", lipgloss.NewStyle().Foreground(accent).Render(svc.URL))
-	line3 := fmt.Sprintf("  %s%s",
-		lipgloss.NewStyle().Foreground(muted).Render("groups: "),
-		lipgloss.NewStyle().Foreground(subtle).Render(strings.Join(svc.Groups, ", ")),
-	)
+		line1 = fmt.Sprintf("  %s  %s  %s",
+			icon,
+			lipgloss.NewStyle().Bold(true).Foreground(t.SelectedFg).Render(r.groupName),
+			lipgloss.NewStyle().Foreground(t.AccentDim).Render(fmt.Sprintf("(%d services, %s)", cnt, state)),
+		)
+		line2 = fmt.Sprintf("  %s", lipgloss.NewStyle().Foreground(t.Accent).Render("press Enter / Space / Tab to toggle fold"))
+		line3 = fmt.Sprintf("  %s%s",
+			lipgloss.NewStyle().Foreground(t.Muted).Render("services: "),
+			lipgloss.NewStyle().Foreground(t.AccentDim).Render(strings.Join(svcNames, ", ")),
+		)
+	} else {
+		svc := m.services[m.rows[m.cursor].serviceIdx]
+		icon := m.getServiceIcon(svc)
+
+		healthStr := ""
+		if s, ok := m.health[m.rows[m.cursor].serviceIdx]; ok {
+			if s == "✓" {
+				healthStr = okDot + lipgloss.NewStyle().Foreground(green).Render(" online")
+			} else {
+				healthStr = failDot + lipgloss.NewStyle().Foreground(red).Render(" offline")
+			}
+		}
+
+		iconStr := ""
+		if icon != "" {
+			iconStr = icon + "  "
+		}
+
+		line1 = fmt.Sprintf("  %s%s  %s",
+			iconStr,
+			lipgloss.NewStyle().Bold(true).Foreground(t.SelectedFg).Render(svc.Name),
+			healthStr,
+		)
+		line2 = fmt.Sprintf("  %s", lipgloss.NewStyle().Foreground(t.Accent).Render(svc.URL))
+		line3 = fmt.Sprintf("  %s%s",
+			lipgloss.NewStyle().Foreground(t.Muted).Render("groups: "),
+			lipgloss.NewStyle().Foreground(t.AccentDim).Render(strings.Join(svc.Groups, ", ")),
+		)
+	}
 
 	w := m.width - 2
-	bar := strings.Repeat("═", w)
-	bdr := subText
+	bar := strings.Repeat(bdr.Horizontal, w)
 
 	padTo := func(s string) string {
-		n := w - realStringWidth(s)
-		if n > 0 {
-			return s + strings.Repeat(" ", n)
+		sw := realStringWidth(s)
+		if sw < w {
+			return s + strings.Repeat(" ", w-sw)
+		}
+		if sw > w {
+			s = ansi.Truncate(s, w-1, "") + "…"
+			sw = realStringWidth(s)
+			if sw < w {
+				s += strings.Repeat(" ", w-sw)
+			}
+			return s
 		}
 		return s
 	}
 
-	left := bdr.Render("║")
-	right := bdr.Render("║")
-	top := bdr.Render("╔" + bar + "╗")
-	bot := bdr.Render("╚" + bar + "╝")
+	left := bdrStyle.Render(bdr.Vertical)
+	right := bdrStyle.Render(bdr.Vertical)
+	top := bdrStyle.Render(bdr.TopLeft + bar + bdr.TopRight)
+	bot := bdrStyle.Render(bdr.BottomLeft + bar + bdr.BottomRight)
 
 	return "\n" + top + "\n" +
 		left + padTo(line1) + right + "\n" +
@@ -936,16 +883,33 @@ func (m model) renderDetail() string {
 }
 
 func (m model) renderSettings() string {
+	t := colorThemes[m.settings.Theme]
+	bdr := borderSets[m.settings.BorderStyle]
+
 	var lines []string
-	title := lipgloss.NewStyle().Foreground(accent).Bold(true).Render("  Settings")
+	title := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render("  Settings")
 	lines = append(lines, title, "")
 
+	iconModes := []string{"Emoji", "ASCII", "Off"}
+
+	maxLabelLen := 0
+	for _, item := range settingItems {
+		if len(item.label) > maxLabelLen {
+			maxLabelLen = len(item.label)
+		}
+	}
+
 	for i, item := range settingItems {
-		label := settingLabel.Render(item.label)
+		paddedLabel := item.label + strings.Repeat(" ", maxLabelLen-len(item.label))
+		label := settingLabel.Render(paddedLabel)
 		var val string
 		switch item.key {
 		case "theme":
 			val = settingValue.Render(colorThemes[m.settings.Theme].Name)
+		case "borders":
+			val = settingValue.Render(borderSets[m.settings.BorderStyle].Name)
+		case "icons":
+			val = settingValue.Render(iconModes[m.settings.IconStyle])
 		case "datetime":
 			if m.settings.DateTime {
 				val = settingValue.Render("On")
@@ -966,7 +930,7 @@ func (m model) renderSettings() string {
 		if i == m.settingsCursor {
 			cursor = settingSel.Render("▸ ")
 		}
-		lines = append(lines, cursor+label+"  "+val)
+		lines = append(lines, cursor+label+"   "+val)
 	}
 
 	if m.editingAlias {
@@ -974,48 +938,82 @@ func (m model) renderSettings() string {
 		lines = append(lines, subText.Render("  Enter CLI alias name:"))
 		lines = append(lines, "  "+m.aliasInput.View())
 		lines = append(lines, "")
-		lines = append(lines, subText.Render("  enter install  esc cancel"))
+		lines = append(lines, subText.Render("  enter install • esc cancel"))
 	} else {
 		if m.installStatus != "" {
 			lines = append(lines, "", "  "+m.installStatus)
 		}
 		lines = append(lines, "")
-		lines = append(lines, subText.Render("  ↑↓ navigate  ←→ change"))
-		lines = append(lines, subText.Render("  enter select  esc cancel"))
+		lines = append(lines, subText.Render("  ↑↓/←→ edit • enter save • esc cancel"))
 	}
 
 	panel := strings.Join(lines, "\n")
-	w := 36
+	w := 44
 	return lipgloss.NewStyle().
-		Border(lipgloss.DoubleBorder()).
-		BorderForeground(muted).
+		Border(bdr.Lipgloss).
+		BorderForeground(t.Border).
+		Padding(0, 1).
+		Width(w).
+		Render(panel)
+}
+
+func (m model) renderHelpModal() string {
+	t := colorThemes[m.settings.Theme]
+	bdr := borderSets[m.settings.BorderStyle]
+
+	var lines []string
+	title := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render("  Keyboard Shortcuts")
+	lines = append(lines, title, "")
+
+	shortcuts := []struct{ key, desc string }{
+		{"↑↓ / j k", "Navigate services"},
+		{"1 - 9", "Quick jump to service"},
+		{"Enter / o", "Open in browser"},
+		{"Tab / space", "Toggle group fold"},
+		{"g / G", "Cycle group / Jump bottom"},
+		{"/", "Search / filter"},
+		{"h", "Re-check health"},
+		{",", "Settings panel"},
+		{"q", "Quit"},
+	}
+
+	for _, sc := range shortcuts {
+		k := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(fmt.Sprintf("  %-13s", sc.key))
+		d := lipgloss.NewStyle().Foreground(t.SelectedFg).Render(sc.desc)
+		lines = append(lines, k+" "+d)
+	}
+
+	lines = append(lines, "")
+	lines = append(lines, subText.Render("  press ? or esc to close"))
+
+	panel := strings.Join(lines, "\n")
+	w := 44
+	return lipgloss.NewStyle().
+		Border(bdr.Lipgloss).
+		BorderForeground(t.Border).
 		Padding(0, 1).
 		Width(w).
 		Render(panel)
 }
 
 func (m model) renderHelp() string {
-	keys := []struct{ key, desc string }{
-		{"↑↓", "nav"},
+	items := []struct{ key, desc string }{
+		{"↑↓", "move"},
 		{"/", "search"},
-		{"enter", "open"},
 		{",", "settings"},
-		{"h", "health"},
-		{"q", "quit"},
+		{"?", "help"},
 	}
 	var parts []string
-	for _, k := range keys {
-		parts = append(parts, helpKeyStyle.Render(k.key)+" "+helpDescStyle.Render(k.desc))
+	for _, it := range items {
+		parts = append(parts, helpKeyStyle.Render(it.key)+" "+helpDescStyle.Render(it.desc))
 	}
-	return strings.Join(parts, "  │  ")
+	return strings.Join(parts, "   ")
 }
 
 func (m model) renderServiceLine(idx int, r row, selected bool, maxName, maxURL int) string {
 	svc := m.services[r.serviceIdx]
-	icon := svc.Icon
-	if icon == "" {
-		icon = "⚙"
-	}
+	t := colorThemes[m.settings.Theme]
+	icon := m.getServiceIcon(svc)
 
 	status := ""
 	if s, ok := m.health[r.serviceIdx]; ok {
@@ -1026,20 +1024,20 @@ func (m model) renderServiceLine(idx int, r row, selected bool, maxName, maxURL 
 		}
 	} else if m.checking {
 		sp := spinnerFrames[m.tick%len(spinnerFrames)]
-		status = " " + lipgloss.NewStyle().Foreground(muted).Render(sp)
+		status = " " + lipgloss.NewStyle().Foreground(t.SelectedIcon).Render(sp)
 	}
 
 	prefix := "    "
 	iconSt := normIcon
 	nameSt := normName
 	if selected {
-		prefix = "  ▸ "
+		prefix = lipgloss.NewStyle().Foreground(t.Accent).Render("  ▸ ")
 		iconSt = selIcon
 		nameSt = selName
 	}
 	if m.settings.Compact {
 		if selected {
-			prefix = " ▸ "
+			prefix = lipgloss.NewStyle().Foreground(t.Accent).Render(" ▸ ")
 		} else {
 			prefix = "   "
 		}
@@ -1047,9 +1045,75 @@ func (m model) renderServiceLine(idx int, r row, selected bool, maxName, maxURL 
 
 	nameW := realStringWidth(svc.Name)
 	paddedName := svc.Name + strings.Repeat(" ", maxName-nameW)
-	paddedURL := svc.URL + strings.Repeat(" ", maxURL-len(svc.URL))
 
-	return prefix + iconSt.Render(padIcon(icon)+" ") + nameSt.Render(paddedName) + urlDim.Render("  "+paddedURL) + status
+	iconPart := ""
+	if m.settings.IconStyle != 2 { // not Off
+		if icon != "" {
+			iconPart = iconSt.Render(padIcon(icon) + " ")
+		}
+	}
+
+	if m.settings.Compact {
+		return prefix + iconPart + nameSt.Render(paddedName)
+	}
+
+	paddedURL := svc.URL + strings.Repeat(" ", maxURL-len(svc.URL))
+	return prefix + iconPart + nameSt.Render(paddedName) + urlDim.Render("  "+paddedURL) + status
+}
+
+func overlayLine(baseLine, overlayLine string, startX, overlayW int) string {
+	if startX < 0 {
+		startX = 0
+	}
+
+	left := ansi.Truncate(baseLine, startX, "")
+	leftW := ansi.StringWidth(left)
+	if leftW < startX {
+		left += strings.Repeat(" ", startX-leftW)
+	}
+
+	right := ""
+	baseW := ansi.StringWidth(baseLine)
+	if baseW > startX+overlayW {
+		right = ansi.TruncateLeft(baseLine, startX+overlayW, "")
+	}
+
+	return left + overlayLine + right
+}
+
+func (m model) overlayModal(baseView, modalView string) string {
+	baseLines := strings.Split(baseView, "\n")
+	overlayLines := strings.Split(modalView, "\n")
+
+	overlayH := len(overlayLines)
+	overlayW := 0
+	for _, l := range overlayLines {
+		if w := realStringWidth(l); w > overlayW {
+			overlayW = w
+		}
+	}
+
+	startY := (m.height - overlayH) / 2
+	startX := (m.width - overlayW) / 2
+	if startY < 0 {
+		startY = 0
+	}
+	if startX < 0 {
+		startX = 0
+	}
+
+	for len(baseLines) < startY+overlayH {
+		baseLines = append(baseLines, "")
+	}
+
+	for i, ol := range overlayLines {
+		y := startY + i
+		if y < len(baseLines) {
+			baseLines[y] = overlayLine(baseLines[y], ol, startX, overlayW)
+		}
+	}
+
+	return strings.Join(baseLines, "\n")
 }
 
 func (m model) View() string {
@@ -1121,8 +1185,10 @@ func (m model) View() string {
 		if w := realStringWidth(svc.Name); w > maxName {
 			maxName = w
 		}
-		if w := len(svc.URL); w > maxURL {
-			maxURL = w
+		if !m.settings.Compact {
+			if w := len(svc.URL); w > maxURL {
+				maxURL = w
+			}
 		}
 	}
 
@@ -1141,13 +1207,31 @@ func (m model) View() string {
 		r := m.rows[i]
 
 		if r.kind == rowGroup {
+			t := colorThemes[m.settings.Theme]
 			icon := r.groupIcon
 			if icon == "" {
 				icon = "▸"
 			}
+			isCollapsed := m.collapsedGroups != nil && m.collapsedGroups[r.groupID]
+			foldSymbol := "▾"
+			if isCollapsed {
+				foldSymbol = "▸"
+			}
 			cnt := m.groupServiceCount(r.groupID)
-			b.WriteString(grpHdr.Render(fmt.Sprintf("  %s %s:", icon, r.groupName)) +
-				" " + grpCnt.Render(fmt.Sprintf("(%d)", cnt)))
+			suffix := ""
+			if isCollapsed {
+				suffix = " " + subText.Render("[folded]")
+			}
+
+			prefix := "  "
+			headerStyle := grpHdr
+			if i == m.cursor {
+				prefix = lipgloss.NewStyle().Foreground(t.Accent).Render("▸ ")
+				headerStyle = lipgloss.NewStyle().Foreground(t.SelectedFg).Bold(true)
+			}
+
+			b.WriteString(prefix + headerStyle.Render(fmt.Sprintf("%s %s %s:", foldSymbol, icon, r.groupName)) +
+				" " + grpCnt.Render(fmt.Sprintf("(%d)", cnt)) + suffix)
 			b.WriteString("\n")
 			continue
 		}
@@ -1162,24 +1246,14 @@ func (m model) View() string {
 	}
 	b.WriteString(help)
 
+	mainView := b.String()
 	if m.showSettings {
-		settingsView := m.renderSettings()
-		settingsH := lipgloss.Height(settingsView)
-		settingsW := lipgloss.Width(settingsView)
-		startY := (m.height - settingsH) / 2
-		startX := (m.width - settingsW) / 2
-		if startY < 0 {
-			startY = 0
-		}
-		if startX < 0 {
-			startX = 0
-		}
-		_ = startY
-		_ = startX
-		b.WriteString("\n" + settingsView)
+		return m.overlayModal(mainView, m.renderSettings())
 	}
-
-	return b.String()
+	if m.showHelp {
+		return m.overlayModal(mainView, m.renderHelpModal())
+	}
+	return mainView
 }
 
 // ── main ─────────────────────────────────────────────────
@@ -1224,7 +1298,7 @@ func main() {
 		}
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p = tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

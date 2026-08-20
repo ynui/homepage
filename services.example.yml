@@ -5,7 +5,7 @@ header: Dashboard
 groups:
   - id: infrastructure
     name: Infrastructure
-    icon: 🛠️
+    icon: 🛠
   - id: monitoring
     name: Monitoring
     icon: 📈
@@ -21,7 +21,7 @@ services:
 
   - name: Service Bravo
     url: https://www.example.com
-    icon: 🛰️
+    icon: 🛰
     groups: [ infrastructure ]
 
   - name: Service Charlie
