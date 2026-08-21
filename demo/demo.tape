@@ -40,9 +40,11 @@ Type "g" Sleep 300ms
 Type "g" Sleep 300ms
 Type "g" Sleep 700ms
 
-# search
+# search: watch results narrow i -> in -> int
 Type "/" Sleep 500ms
-Type "news" Sleep 1200ms
+Type "i" Sleep 900ms
+Type "n" Sleep 900ms
+Type "t" Sleep 1200ms
 Escape Sleep 700ms
 
 # settings tour (Esc at the end reverts everything)

@@ -77,6 +77,12 @@ services:
     icon: 🗺
     groups: [ tools ]
 
+  # unreachable on purpose: shows the offline (✗) health indicator
+  - name: Unreachable Service
+    url: https://unreachable.example.com
+    icon: 🔌
+    groups: [ tools ]
+
   - name: Internet Archive
     url: https://archive.org
     icon: 🏛
