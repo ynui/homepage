@@ -1,4 +1,4 @@
-.PHONY: build build-html build-cmd run-web run-cli demo clean
+.PHONY: build build-html build-cmd run-web run-cli demo demo-web clean
 
 build: build-html build-cmd
 
@@ -16,6 +16,10 @@ run-cli: build-cmd
 
 demo: build-cmd
 	vhs demo/demo.tape
+
+demo-web:
+	python3 web/build.py --example
+	node demo/web.mjs
 
 clean:
 	rm -rf output

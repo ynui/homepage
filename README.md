@@ -2,6 +2,9 @@
 
 A minimal, keyboard-friendly homepage dashboard with web and CLI frontends.
 
+![Web UI demo](demo/web.gif)
+*(the web dashboard — regenerate with `make demo-web`)*
+
 ![CLI TUI demo](demo/demo.gif)
 
 *(the CLI TUI — regenerate with `make demo`)*
