@@ -2,6 +2,10 @@
 
 A minimal, keyboard-friendly homepage dashboard with web and CLI frontends.
 
+![CLI TUI demo](demo/demo.gif)
+
+*(the CLI TUI — regenerate with `make demo`)*
+
 ## Features
 
 - Clean, dark-themed UI with light mode option
@@ -138,6 +142,9 @@ make build
 │   └── go.sum
 ├── services.yml             # Service definitions
 ├── services.example.yml     # Example config
+├── demo/
+│   ├── demo.tape            # VHS script for the TUI demo gif
+│   └── demo.gif             # Generated demo (make demo)
 ├── Makefile                 # Build orchestration
 ├── output/                  # Generated files (gitignored)
 │   ├── index.html

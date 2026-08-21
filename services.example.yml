@@ -3,43 +3,81 @@ header: Dashboard
 
 # Metadata for the UI layout
 groups:
-  - id: infrastructure
-    name: Infrastructure
-    icon: 🛠
-  - id: monitoring
-    name: Monitoring
-    icon: 📈
-  - id: automation
-    name: Automation
-    icon: 🤖
+  - id: news
+    name: News
+    icon: 📰
+  - id: media
+    name: Media
+    icon: 🎬
+  - id: social
+    name: Social
+    icon: 💬
+  - id: tools
+    name: Tools
+    icon: 🧰
 
 services:
-  - name: Service Alpha
-    url: https://www.example.com
-    icon: 🚀
-    groups: [ infrastructure, monitoring, automation ]
+  - name: BBC News
+    url: https://www.bbc.com/news
+    icon: 📰
+    groups: [ news ]
 
-  - name: Service Bravo
-    url: https://www.example.com
-    icon: 🛰
-    groups: [ infrastructure ]
-
-  - name: Service Charlie
-    url: https://charlie.example.com
+  - name: Reuters
+    url: https://www.reuters.com
     icon: 📡
-    groups: [ monitoring, infrastructure ]
+    groups: [ news ]
 
-  - name: Service Delta
-    url: https://delta.example.com
-    icon: 🔋
-    groups: [ automation ]
+  - name: Wikipedia
+    url: https://www.wikipedia.org
+    icon: 🌐
+    groups: [ news ]
 
-  - name: Service Echo
-    url: https://www.example.com
-    icon: 📟
-    groups: [ monitoring ]
+  - name: YouTube
+    url: https://www.youtube.com
+    icon: 📺
+    groups: [ media, social ] # services can live in multiple groups
 
-  - name: Service Foxtrot
-    url: https://www.example.com
-    icon: 🖥
-    # groups: [] # no groups
+  - name: Netflix
+    url: https://www.netflix.com
+    icon: 🍿
+    groups: [ media ]
+
+  - name: Spotify
+    url: https://open.spotify.com
+    icon: 🎧
+    groups: [ media ]
+
+  - name: Twitch
+    url: https://www.twitch.tv
+    icon: 🎮
+    groups: [ media ]
+
+  - name: Reddit
+    url: https://www.reddit.com
+    icon: 👽
+    groups: [ social ]
+
+  - name: Instagram
+    url: https://www.instagram.com
+    icon: 📷
+    groups: [ social ]
+
+  - name: Mastodon
+    url: https://joinmastodon.org
+    icon: 🐘
+    groups: [ social ]
+
+  - name: Gmail
+    url: https://mail.google.com
+    icon: 📧
+    groups: [ tools ]
+
+  - name: Google Maps
+    url: https://maps.google.com
+    icon: 🗺
+    groups: [ tools ]
+
+  - name: Internet Archive
+    url: https://archive.org
+    icon: 🏛
+    # groups: [] # no groups -> shows under "Other"
