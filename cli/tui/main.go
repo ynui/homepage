@@ -354,6 +354,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.settings.IconStyle = 0
 						}
 					}
+				case "grpicons":
+					m.settings.GroupIcons = !m.settings.GroupIcons
 				case "datetime":
 					m.settings.DateTime = !m.settings.DateTime
 					if m.settings.DateTime {
@@ -795,7 +797,7 @@ func (m model) renderDetail() string {
 	if m.rows[m.cursor].kind == rowGroup {
 		r := m.rows[m.cursor]
 		icon := r.groupIcon
-		if icon == "" {
+		if !m.settings.GroupIcons || icon == "" {
 			icon = "▸"
 		}
 		isCollapsed := m.collapsedGroups != nil && m.collapsedGroups[r.groupID]
@@ -919,6 +921,12 @@ func (m model) renderSettings() string {
 			} else {
 				val = settingValue.Render("Off")
 			}
+		case "grpicons":
+			if m.settings.GroupIcons {
+				val = settingValue.Render("On")
+			} else {
+				val = settingValue.Render("Off")
+			}
 		case "compact":
 			if m.settings.Compact {
 				val = settingValue.Render("On")
@@ -1030,19 +1038,19 @@ func (m model) renderServiceLine(idx int, r row, selected bool, maxName, maxURL 
 		status = " " + lipgloss.NewStyle().Foreground(t.SelectedIcon).Render(sp)
 	}
 
-	prefix := "    "
+	prefix := "      "
 	iconSt := normIcon
 	nameSt := normName
 	if selected {
-		prefix = lipgloss.NewStyle().Foreground(t.Accent).Render("  ▸ ")
+		prefix = lipgloss.NewStyle().Foreground(t.Accent).Render("    ▸ ")
 		iconSt = selIcon
 		nameSt = selName
 	}
 	if m.settings.Compact {
 		if selected {
-			prefix = lipgloss.NewStyle().Foreground(t.Accent).Render(" ▸ ")
+			prefix = lipgloss.NewStyle().Foreground(t.Accent).Render("   ▸ ")
 		} else {
-			prefix = "   "
+			prefix = "     "
 		}
 	}
 
@@ -1212,8 +1220,8 @@ func (m model) View() string {
 		if r.kind == rowGroup {
 			t := colorThemes[m.settings.Theme]
 			icon := r.groupIcon
-			if icon == "" {
-				icon = "▸"
+			if !m.settings.GroupIcons {
+				icon = ""
 			}
 			isCollapsed := m.collapsedGroups != nil && m.collapsedGroups[r.groupID]
 			foldSymbol := "▾"
@@ -1233,7 +1241,13 @@ func (m model) View() string {
 				headerStyle = lipgloss.NewStyle().Foreground(t.SelectedFg).Bold(true)
 			}
 
-			b.WriteString(prefix + headerStyle.Render(fmt.Sprintf("%s %s %s:", foldSymbol, icon, r.groupName)) +
+			header := foldSymbol
+			if icon != "" {
+				header += " " + icon
+			}
+			header += " " + r.groupName + ":"
+
+			b.WriteString(prefix + headerStyle.Render(header) +
 				" " + grpCnt.Render(fmt.Sprintf("(%d)", cnt)) + suffix)
 			b.WriteString("\n")
 			continue

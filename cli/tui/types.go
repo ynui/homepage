@@ -53,6 +53,7 @@ type Settings struct {
 	Compact     bool   `json:"compact"`
 	Alias       string `json:"alias"`
 	ShowIcons   *bool  `json:"showIcons,omitempty"`
+	GroupIcons  bool   `json:"groupIcons"`
 }
 
 type healthResult struct {
@@ -79,6 +80,7 @@ var settingItems = []struct{ label, key string }{
 	{"Theme", "theme"},
 	{"Borders", "borders"},
 	{"Icons", "icons"},
+	{"Group Icons", "grpicons"},
 	{"DateTime", "datetime"},
 	{"Compact", "compact"},
 	{"Install CLI", "install"},

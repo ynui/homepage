@@ -121,6 +121,7 @@ func loadSettings() Settings {
 		DateTime:    true,
 		Compact:     false,
 		Alias:       "hp",
+		GroupIcons:  true,
 	}
 	data, err := os.ReadFile(settingsPath())
 	if err != nil {
