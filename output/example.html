@@ -569,33 +569,62 @@ body {
       <input type="text" id="search" class="search" placeholder="Search...">
     </header>
     <div class="grid">
-      <div class="group-header" data-group="infrastructure">Infrastructure</div>
-      <a href="https://www.example.com" data-name="service alpha" data-groups="infrastructure monitoring automation" data-url="https://www.example.com" data-default-url="https://www.example.com">
-        <span class="icon">🚀</span>
-        Service Alpha
+      <div class="group-header" data-group="news">News</div>
+      <a href="https://www.bbc.com/news" data-name="bbc news" data-groups="news" data-url="https://www.bbc.com/news" data-default-url="https://www.bbc.com/news">
+        <span class="icon">📰</span>
+        BBC News
       </a>
-      <a href="https://www.example.com" data-name="service bravo" data-groups="infrastructure" data-url="https://www.example.com" data-default-url="https://www.example.com">
-        <span class="icon">🛰</span>
-        Service Bravo
-      </a>
-      <a href="https://charlie.example.com" data-name="service charlie" data-groups="monitoring infrastructure" data-url="https://charlie.example.com" data-default-url="https://charlie.example.com">
+      <a href="https://www.reuters.com" data-name="reuters" data-groups="news" data-url="https://www.reuters.com" data-default-url="https://www.reuters.com">
         <span class="icon">📡</span>
-        Service Charlie
+        Reuters
       </a>
-      <div class="group-header" data-group="monitoring">Monitoring</div>
-      <a href="https://www.example.com" data-name="service echo" data-groups="monitoring" data-url="https://www.example.com" data-default-url="https://www.example.com">
-        <span class="icon">📟</span>
-        Service Echo
+      <a href="https://www.wikipedia.org" data-name="wikipedia" data-groups="news" data-url="https://www.wikipedia.org" data-default-url="https://www.wikipedia.org">
+        <span class="icon">🌐</span>
+        Wikipedia
       </a>
-      <div class="group-header" data-group="automation">Automation</div>
-      <a href="https://delta.example.com" data-name="service delta" data-groups="automation" data-url="https://delta.example.com" data-default-url="https://delta.example.com">
-        <span class="icon">🔋</span>
-        Service Delta
+      <div class="group-header" data-group="media">Media</div>
+      <a href="https://www.youtube.com" data-name="youtube" data-groups="media social" data-url="https://www.youtube.com" data-default-url="https://www.youtube.com">
+        <span class="icon">📺</span>
+        YouTube
+      </a>
+      <a href="https://www.netflix.com" data-name="netflix" data-groups="media" data-url="https://www.netflix.com" data-default-url="https://www.netflix.com">
+        <span class="icon">🍿</span>
+        Netflix
+      </a>
+      <a href="https://open.spotify.com" data-name="spotify" data-groups="media" data-url="https://open.spotify.com" data-default-url="https://open.spotify.com">
+        <span class="icon">🎧</span>
+        Spotify
+      </a>
+      <a href="https://www.twitch.tv" data-name="twitch" data-groups="media" data-url="https://www.twitch.tv" data-default-url="https://www.twitch.tv">
+        <span class="icon">🎮</span>
+        Twitch
+      </a>
+      <div class="group-header" data-group="social">Social</div>
+      <a href="https://www.reddit.com" data-name="reddit" data-groups="social" data-url="https://www.reddit.com" data-default-url="https://www.reddit.com">
+        <span class="icon">👽</span>
+        Reddit
+      </a>
+      <a href="https://www.instagram.com" data-name="instagram" data-groups="social" data-url="https://www.instagram.com" data-default-url="https://www.instagram.com">
+        <span class="icon">📷</span>
+        Instagram
+      </a>
+      <a href="https://joinmastodon.org" data-name="mastodon" data-groups="social" data-url="https://joinmastodon.org" data-default-url="https://joinmastodon.org">
+        <span class="icon">🐘</span>
+        Mastodon
+      </a>
+      <div class="group-header" data-group="tools">Tools</div>
+      <a href="https://mail.google.com" data-name="gmail" data-groups="tools" data-url="https://mail.google.com" data-default-url="https://mail.google.com">
+        <span class="icon">📧</span>
+        Gmail
+      </a>
+      <a href="https://maps.google.com" data-name="google maps" data-groups="tools" data-url="https://maps.google.com" data-default-url="https://maps.google.com">
+        <span class="icon">🗺</span>
+        Google Maps
       </a>
       <div class="group-header" data-group="nogroup">No Group</div>
-      <a href="https://www.example.com" data-name="service foxtrot" data-groups="nogroup" data-url="https://www.example.com" data-default-url="https://www.example.com">
-        <span class="icon">🖥</span>
-        Service Foxtrot
+      <a href="https://archive.org" data-name="internet archive" data-groups="nogroup" data-url="https://archive.org" data-default-url="https://archive.org">
+        <span class="icon">🏛</span>
+        Internet Archive
       </a>
 
     </div>
@@ -638,7 +667,7 @@ body {
     <div class="hint-row"><span class="key">?</span><span>Show shortcuts</span></div>
   </div>
   <script>
-window.GROUPS = [{"id": "infrastructure", "name": "Infrastructure", "icon": "\ud83d\udee0"}, {"id": "monitoring", "name": "Monitoring", "icon": "\ud83d\udcc8"}, {"id": "automation", "name": "Automation", "icon": "\ud83e\udd16"}, {"id": "nogroup", "name": "No Group", "icon": ""}, {"id": "all", "name": "All", "icon": ""}];
+window.GROUPS = [{"id": "news", "name": "News", "icon": "\ud83d\udcf0"}, {"id": "media", "name": "Media", "icon": "\ud83c\udfac"}, {"id": "social", "name": "Social", "icon": "\ud83d\udcac"}, {"id": "tools", "name": "Tools", "icon": "\ud83e\uddf0"}, {"id": "nogroup", "name": "No Group", "icon": ""}, {"id": "all", "name": "All", "icon": ""}];
 function updateTime() {
   const now = new Date();
   const is24h = localStorage.getItem('homepage-clock24') !== 'false';
