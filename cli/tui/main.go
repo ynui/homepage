@@ -128,6 +128,8 @@ type model struct {
 	aliasInput       textinput.Model
 
 	showHelp bool
+
+	confirmQuit bool
 }
 
 // ── tea ──────────────────────────────────────────────────
@@ -228,9 +230,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.rebuildFilter()
 			if len(m.filtered) > 0 {
 				m.cursor = m.filtered[0]
-				if svc := m.selectedService(); svc != nil {
-					openBrowser(svc.URL)
-				}
 			}
 			return m, nil
 			}
@@ -254,21 +253,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case "esc":
 					m.editingAlias = false
 					return m, nil
-				case "enter":
-					alias := strings.TrimSpace(m.aliasInput.Value())
-					if alias == "" {
-						alias = "hp"
-					}
-					m.settings.Alias = alias
-					saveSettings(m.settings)
-					msgStr, err := installCLI(alias)
-					if err != nil {
-						m.installStatus = lipgloss.NewStyle().Foreground(red).Render("✗ " + err.Error())
-					} else {
-						m.installStatus = lipgloss.NewStyle().Foreground(green).Render("✓ " + msgStr)
-					}
-					m.editingAlias = false
+			case "enter":
+				oldAlias := m.settings.Alias
+				alias := strings.TrimSpace(m.aliasInput.Value())
+				if alias == "" {
+					alias = "hp"
+				}
+				if !validAlias(alias) {
+					m.installStatus = lipgloss.NewStyle().Foreground(red).Render("✗ invalid alias (use letters, digits, - or _)")
 					return m, nil
+				}
+				m.settings.Alias = alias
+				saveSettings(m.settings)
+				msgStr, err := installCLI(oldAlias, alias)
+				if err != nil {
+					m.installStatus = lipgloss.NewStyle().Foreground(red).Render("✗ " + err.Error())
+				} else {
+					m.installStatus = lipgloss.NewStyle().Foreground(green).Render("✓ " + msgStr)
+				}
+				m.editingAlias = false
+				return m, nil
 				}
 			}
 			var cmd tea.Cmd
@@ -378,22 +382,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		s := msg.String()
+		if m.confirmQuit {
+			m.confirmQuit = false
+			if s == "enter" {
+				return m, tea.Quit
+			}
+			return m, nil
+		}
 		switch s {
-		case "ctrl+c", "q":
+		case "ctrl+c":
 			return m, tea.Quit
+		case "q":
+			m.confirmQuit = true
 		case "esc":
 			if m.query != "" {
 				m.query = ""
 				m.rebuildFilter()
+			} else {
+				m.confirmQuit = true
 			}
 		case "?":
 			m.showHelp = true
 		case "g":
 			m.cycleGroup()
-		case "G":
-			m.cursor = m.lastVisible()
-		case "tab", " ", "space":
-			m.toggleCurrentGroup()
+		case "left":
+			m.foldCurrent()
+		case "right":
+			m.unfoldCurrent()
 		case "up", "k":
 			m.moveUp()
 		case "down", "j":
@@ -409,7 +424,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.health = make(map[int]string)
 				return m, tea.Batch(m.startHealth(), tickCmd())
 			}
-		case "enter", "o":
+		case "enter":
 			if m.cursor < len(m.rows) {
 				if m.rows[m.cursor].kind == rowGroup {
 					m.toggleCurrentGroup()
@@ -423,10 +438,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.settingsSnapshot = m.settings
 			m.showSettings = true
 			m.settingsCursor = 0
-		default:
-			if len(s) == 1 && s[0] >= '1' && s[0] <= '9' {
-				m.jumpToNumber(int(s[0] - '0'))
-			}
 		}
 	}
 
@@ -435,43 +446,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // ── filter / navigation ──────────────────────────────────
 
-func (m *model) jumpToNumber(num int) {
-	count := 0
-	for i, r := range m.rows {
-		if r.kind == rowService && m.isRowVisible(i) {
-			count++
-			if count == num {
-				m.cursor = i
-				return
-			}
+func (m *model) parentGroupIdx() (string, int) {
+	if m.cursor >= len(m.rows) {
+		return "", -1
+	}
+	r := m.rows[m.cursor]
+	if r.kind == rowGroup {
+		return r.groupID, m.cursor
+	}
+	svc := m.services[r.serviceIdx]
+	gid := ""
+	if len(svc.Groups) > 0 {
+		gid = svc.Groups[0]
+	} else {
+		gid = "Other"
+	}
+	for i, gr := range m.rows {
+		if gr.kind == rowGroup && gr.groupID == gid {
+			return gid, i
 		}
 	}
+	return gid, -1
 }
 
 func (m *model) toggleCurrentGroup() {
-	if m.cursor >= len(m.rows) {
-		return
-	}
-	r := m.rows[m.cursor]
-	gid := ""
-	groupRowIdx := -1
-	if r.kind == rowGroup {
-		gid = r.groupID
-		groupRowIdx = m.cursor
-	} else {
-		svc := m.services[r.serviceIdx]
-		if len(svc.Groups) > 0 {
-			gid = svc.Groups[0]
-		} else {
-			gid = "Other"
-		}
-		for i, gr := range m.rows {
-			if gr.kind == rowGroup && gr.groupID == gid {
-				groupRowIdx = i
-				break
-			}
-		}
-	}
+	gid, idx := m.parentGroupIdx()
 	if gid == "" {
 		return
 	}
@@ -479,11 +478,37 @@ func (m *model) toggleCurrentGroup() {
 		m.collapsedGroups = make(map[string]bool)
 	}
 	m.collapsedGroups[gid] = !m.collapsedGroups[gid]
-	if m.collapsedGroups[gid] && groupRowIdx >= 0 {
-		m.cursor = groupRowIdx
+	if m.collapsedGroups[gid] && idx >= 0 {
+		m.cursor = idx
 	} else {
 		m.snapCursor()
 	}
+}
+
+func (m *model) foldCurrent() {
+	gid, idx := m.parentGroupIdx()
+	if gid == "" {
+		return
+	}
+	if m.collapsedGroups == nil {
+		m.collapsedGroups = make(map[string]bool)
+	}
+	m.collapsedGroups[gid] = true
+	if idx >= 0 {
+		m.cursor = idx
+	}
+}
+
+func (m *model) unfoldCurrent() {
+	if m.cursor >= len(m.rows) {
+		return
+	}
+	r := m.rows[m.cursor]
+	if r.kind != rowGroup || !m.collapsedGroups[r.groupID] {
+		return
+	}
+	m.collapsedGroups[r.groupID] = false
+	m.snapCursor()
 }
 
 func (m *model) cycleGroup() {
@@ -550,24 +575,6 @@ func (m model) visibleRows() []int {
 		return vis
 	}
 	return m.filtered
-}
-
-func (m *model) firstVisible() int {
-	for i := range m.rows {
-		if m.isRowVisible(i) {
-			return i
-		}
-	}
-	return 0
-}
-
-func (m *model) lastVisible() int {
-	for i := len(m.rows) - 1; i >= 0; i-- {
-		if m.isRowVisible(i) {
-			return i
-		}
-	}
-	return len(m.rows) - 1
 }
 
 func (m *model) moveUp() {
@@ -821,7 +828,7 @@ func (m model) renderDetail() string {
 			lipgloss.NewStyle().Bold(true).Foreground(t.SelectedFg).Render(r.groupName),
 			lipgloss.NewStyle().Foreground(t.AccentDim).Render(fmt.Sprintf("(%d services, %s)", cnt, state)),
 		)
-		line2 = fmt.Sprintf("  %s", lipgloss.NewStyle().Foreground(t.Accent).Render("press Enter / Space / Tab to toggle fold"))
+		line2 = fmt.Sprintf("  %s", lipgloss.NewStyle().Foreground(t.Accent).Render("press → expand • ← fold • enter open"))
 		line3 = fmt.Sprintf("  %s%s",
 			lipgloss.NewStyle().Foreground(t.Muted).Render("services: "),
 			lipgloss.NewStyle().Foreground(t.AccentDim).Render(strings.Join(svcNames, ", ")),
@@ -935,6 +942,11 @@ func (m model) renderSettings() string {
 			}
 		case "install":
 			val = settingValue.Render("→ [" + m.settings.Alias + "]")
+			if aliasInstalled(m.settings.Alias) {
+				val += statOk.Render(" ✓")
+			} else {
+				val += statFail.Render(" ✗")
+			}
 		}
 
 		cursor := "  "
@@ -974,37 +986,70 @@ func (m model) renderHelpModal() string {
 
 	var lines []string
 	title := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render("  Keyboard Shortcuts")
-	lines = append(lines, title, "")
+	divider := lipgloss.NewStyle().Foreground(t.Border).Render("  " + strings.Repeat(bdr.Horizontal, 40))
+	lines = append(lines, title, divider)
 
-	shortcuts := []struct{ key, desc string }{
-		{"↑↓ / j k", "Navigate services"},
-		{"1 - 9", "Quick jump to service"},
-		{"Enter / o", "Open in browser"},
-		{"Tab / space", "Toggle group fold"},
-		{"g / G", "Cycle group / Jump bottom"},
-		{"/", "Search / filter"},
-		{"h", "Re-check health"},
-		{",", "Settings panel"},
-		{"q", "Quit"},
+	keySt := lipgloss.NewStyle().Foreground(t.Accent).Bold(true)
+	descSt := lipgloss.NewStyle().Foreground(t.SelectedFg)
+
+	groups := [][]struct{ key, desc string }{
+		{
+			{"↑↓ / j k", "Navigate services"},
+			{"← →", "Fold / unfold group"},
+			{"Enter", "Open / expand"},
+		},
+		{
+			{"/", "Search"},
+			{"g", "Cycle group filter"},
+			{"h", "Re-check health"},
+		},
+		{
+			{",", "Settings"},
+			{"?", "Help"},
+			{"q / esc", "Quit"},
+		},
 	}
 
-	for _, sc := range shortcuts {
-		k := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(fmt.Sprintf("  %-13s", sc.key))
-		d := lipgloss.NewStyle().Foreground(t.SelectedFg).Render(sc.desc)
-		lines = append(lines, k+" "+d)
+	for gi, group := range groups {
+		if gi > 0 {
+			lines = append(lines, "")
+		}
+		for _, sc := range group {
+			lines = append(lines, keySt.Render(fmt.Sprintf("  %-13s", sc.key))+descSt.Render(sc.desc))
+		}
 	}
 
-	lines = append(lines, "")
-	lines = append(lines, subText.Render("  press ? or esc to close"))
+	hint := subText.Render("press ? or esc to close")
+	pad := (44 - 4 - realStringWidth(hint)) / 2
+	if pad < 1 {
+		pad = 1
+	}
+	lines = append(lines, "", strings.Repeat(" ", pad)+hint)
 
 	panel := strings.Join(lines, "\n")
-	w := 44
 	return lipgloss.NewStyle().
 		Border(bdr.Lipgloss).
 		BorderForeground(t.Border).
 		Padding(0, 1).
-		Width(w).
+		Width(44).
 		Render(panel)
+}
+
+func (m model) renderQuitPrompt() string {
+	t := colorThemes[m.settings.Theme]
+	bdr := borderSets[m.settings.BorderStyle]
+
+	lines := []string{
+		lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render("  Really quit?"),
+		"",
+		subText.Render("  enter quit • any other key stay"),
+	}
+	return lipgloss.NewStyle().
+		Border(bdr.Lipgloss).
+		BorderForeground(t.Border).
+		Padding(0, 1).
+		Width(40).
+		Render(strings.Join(lines, "\n"))
 }
 
 func (m model) renderHelp() string {
@@ -1270,6 +1315,9 @@ func (m model) View() string {
 	if m.showHelp {
 		return m.overlayModal(mainView, m.renderHelpModal())
 	}
+	if m.confirmQuit {
+		return m.overlayModal(mainView, m.renderQuitPrompt())
+	}
 	return mainView
 }
 
@@ -1301,6 +1349,7 @@ func main() {
 
 	settings := loadSettings()
 	settings.applyTheme()
+	refreshInstalledCLI(settings.Alias)
 
 	m := model{
 		cfg:         cfg,

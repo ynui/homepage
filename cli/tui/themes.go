@@ -129,6 +129,9 @@ func (s Settings) applyTheme() {
 	if s.Theme < 0 || s.Theme >= len(colorThemes) {
 		s.Theme = 0
 	}
+	if s.BorderStyle < 0 || s.BorderStyle >= len(borderSets) {
+		s.BorderStyle = 0
+	}
 	t := colorThemes[s.Theme]
 	accent = t.Accent
 	accentDim = t.AccentDim

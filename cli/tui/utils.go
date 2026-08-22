@@ -229,14 +229,36 @@ func ensureLocalBinInPATH() string {
 	return " (Run: source ~/.zshrc)"
 }
 
-func installCLI(alias string) (string, error) {
+func validAlias(a string) bool {
+	if a == "" {
+		return false
+	}
+	for _, r := range a {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
+}
+
+// ponytail: indirection so tests can fake the installed binary location
+var exePath = os.Executable
+
+func installCLI(oldAlias, alias string) (string, error) {
 	if alias == "" {
 		alias = "hp"
 	}
+	if !validAlias(alias) {
+		return "", fmt.Errorf("invalid alias %q (use letters, digits, - or _)", alias)
+	}
 
-	bin, err := os.Executable()
+	bin, err := exePath()
 	if err != nil {
 		return "", fmt.Errorf("locate binary error: %w", err)
+	}
+	// ponytail: launched via the installed symlink -> resolve or we'd link to ourselves
+	if resolved, err := filepath.EvalSymlinks(bin); err == nil {
+		bin = resolved
 	}
 
 	home, err := os.UserHomeDir()
@@ -250,22 +272,73 @@ func installCLI(alias string) (string, error) {
 	}
 
 	dst := filepath.Join(binDir, alias)
+	_ = os.Remove(dst)
 
 	data, err := os.ReadFile(bin)
 	if err != nil {
-		if fallbackData, err2 := os.ReadFile("output/tui"); err2 == nil {
-			data = fallbackData
-		} else {
-			return "", fmt.Errorf("read binary error: %w", err)
-		}
+		return "", fmt.Errorf("read binary error: %w", err)
 	}
-
-	_ = os.Remove(dst)
-
 	if err := os.WriteFile(dst, data, 0755); err != nil {
 		return "", fmt.Errorf("write binary error: %w", err)
 	}
 
+	if oldAlias != "" && oldAlias != alias {
+		_ = os.Remove(filepath.Join(binDir, oldAlias))
+	}
+
 	pathMsg := ensureLocalBinInPATH()
 	return fmt.Sprintf("Installed ~/.local/bin/%s%s", alias, pathMsg), nil
+}
+
+// refreshInstalledCLI recopies the installed alias if it differs from the
+// running binary, so a rebuilt output/tui updates hp on next launch.
+// Survives repo deletion (plain copy, not symlink).
+func refreshInstalledCLI(alias string) {
+	if alias == "" {
+		alias = "hp"
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	dst := filepath.Join(home, ".local", "bin", alias)
+	if _, err := os.Lstat(dst); err != nil {
+		return // never installed
+	}
+	bin, err := exePath()
+	if err != nil {
+		return
+	}
+	if resolved, err := filepath.EvalSymlinks(bin); err == nil {
+		bin = resolved
+	}
+	stale := true
+	if info, err := os.Stat(dst); err == nil {
+		if src, err := os.Stat(bin); err == nil &&
+			info.Size() == src.Size() && info.ModTime().Sub(src.ModTime()) < time.Second {
+			stale = false
+		}
+	}
+	if !stale {
+		return
+	}
+	// ponytail: naive size+mtime staleness check; checksums if false refreshes bite
+	data, err := os.ReadFile(bin)
+	if err != nil {
+		return
+	}
+	_ = os.Remove(dst)
+	_ = os.WriteFile(dst, data, 0755)
+}
+
+func aliasInstalled(alias string) bool {
+	if alias == "" {
+		alias = "hp"
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(filepath.Join(home, ".local", "bin", alias))
+	return err == nil
 }
