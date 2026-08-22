@@ -29,11 +29,10 @@ Type "j" Sleep 400ms
 Type "j" Sleep 600ms
 
 # fold / unfold current group
-Tab Sleep 900ms
-Tab Sleep 700ms
+Left Sleep 900ms
+Right Sleep 700ms
 
-# jump bottom, then cycle group filter and back to all
-Type "G" Sleep 700ms
+# cycle group filter and back to all
 Type "g" Sleep 800ms
 Type "g" Sleep 800ms
 Type "g" Sleep 300ms
@@ -72,5 +71,6 @@ Escape Sleep 700ms
 Type "?" Sleep 1600ms
 Escape Sleep 600ms
 
-# quit
-Type "q" Sleep 600ms
+# quit: confirm prompt, enter confirms
+Type "q" Sleep 900ms
+Enter Sleep 400ms
